@@ -34,7 +34,22 @@
               "raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"secret123\"\n}"
             },
             "url": { "raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api", "auth", "login"] }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Set token variable from login response",
+                  "if (pm.response.code === 200 && pm.response.json().token) {",
+                  "    pm.collectionVariables.set('token', pm.response.json().token);",
+                  "}"
+
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         }
       ]
     },
