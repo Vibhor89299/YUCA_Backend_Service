@@ -1,48 +1,85 @@
 import express from "express";
-import Product from "../models/Product.js";
 import { protect, adminOnly } from "../middlewares/authMiddleware.js";
+import { 
+  createProduct, 
+  updateProduct, 
+  deleteProduct, 
+  updateInventory,
+  getProductsAdmin
+} from "../controllers/adminController.js";
+import { 
+  productValidationRules, 
+  inventoryValidationRules 
+} from "../middleware/validators/productValidator.js";
+import { validate } from "../middleware/validationMiddleware.js";
 
 const router = express.Router();
 
-// Create product
-router.post("/products", protect, adminOnly, async (req, res) => {
-  try {
-    const product = await Product.create(req.body);
-    res.status(201).json(product);
-  } catch (err) {
-    res.status(500).json({ msg: "Failed to create product", error: err.message });
-  }
-});
+// @desc    Create a new product
+// @route   POST /api/admin/products
+// @access  Private/Admin
+router.post(
+  "/products",
+  protect,
+  adminOnly,
+  productValidationRules(),
+  validate,
+  createProduct
+);
 
-// Get all products
-router.get("/products", protect, adminOnly, async (req, res) => {
-  try {
-    const products = await Product.find();
-    res.json(products);
-  } catch (err) {
-    res.status(500).json({ msg: "Failed to fetch products", error: err.message });
-  }
-});
+// @desc    Get all products with pagination
+// @route   GET /api/admin/products
+// @access  Private/Admin
+router.get("/products", protect, adminOnly, getProductsAdmin);
 
-// Update product
-router.put("/products/:id", protect, adminOnly, async (req, res) => {
-  try {
-    const product = await Product.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-    });
-    res.json(product);
-  } catch (err) {
-    res.status(500).json({ msg: "Failed to update product", error: err.message });
-  }
-});
+// @desc    Update a product
+// @route   PUT /api/admin/products/:id
+// @access  Private/Admin
+router.put(
+  "/products/:id",
+  protect,
+  adminOnly,
+  productValidationRules(),
+  validate,
+  updateProduct
+);
 
-// Low-stock alert
+// @desc    Update product inventory
+// @route   PUT /api/admin/products/:id/inventory
+// @access  Private/Admin
+router.put(
+  "/products/:id/inventory",
+  protect,
+  adminOnly,
+  inventoryValidationRules(),
+  validate,
+  updateInventory
+);
+
+// @desc    Delete a product
+// @route   DELETE /api/admin/products/:id
+// @access  Private/Admin
+router.delete("/products/:id", protect, adminOnly, deleteProduct);
+
+// @desc    Get low stock products
+// @route   GET /api/admin/low-stock
+// @access  Private/Admin
 router.get("/low-stock", protect, adminOnly, async (req, res) => {
   try {
-    const lowStockProducts = await Product.find({ countInStock: { $lt: 5 } });
-    res.json(lowStockProducts);
-  } catch (err) {
-    res.status(500).json({ msg: "Failed to fetch low stock", error: err.message });
+    const lowStockProducts = await Product.find({ 
+      countInStock: { $lt: 5 } 
+    }).sort({ countInStock: 1 });
+    
+    res.json({
+      count: lowStockProducts.length,
+      products: lowStockProducts
+    });
+  } catch (error) {
+    console.error('Error fetching low stock products:', error);
+    res.status(500).json({ 
+      message: 'Error fetching low stock products',
+      error: error.message 
+    });
   }
 });
 

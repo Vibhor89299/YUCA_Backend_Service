@@ -16,9 +16,12 @@ export const protect = async (req, res, next) => {
 };
 
 export const adminOnly = (req, res, next) => {
-  if (req.user?.isAdmin) {
+  if (req.user?.role === 'ADMIN') {
     next();
   } else {
-    res.status(403).json({ msg: "Admin access required" });
+    res.status(403).json({ 
+      success: false,
+      message: "Admin access required" 
+    });
   }
 };
