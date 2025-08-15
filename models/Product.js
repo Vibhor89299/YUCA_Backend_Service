@@ -49,24 +49,11 @@ const productSchema = new mongoose.Schema(
       type: String,
       default: '/images/sample.jpg'
     },
-    featured: {
-      type: Boolean,
-      default: false
-    },
-    status: {
-      type: String,
-      enum: ['active', 'inactive'],
-      default: 'active'
-    },
-    averageRating: {
+    rating: {
       type: Number,
       default: 0
     },
     numReviews: {
-      type: Number,
-      default: 0
-    },
-    sales: {
       type: Number,
       default: 0
     },

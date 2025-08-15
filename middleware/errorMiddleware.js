@@ -1,5 +1,4 @@
-import pkg from 'express-validator';
-const { ValidationError } = pkg;
+import { validationResult } from 'express-validator';
 
 // Not Found Error Handler
 export const notFound = (req, res, next) => {
@@ -50,16 +49,6 @@ export const errorHandler = (err, req, res, next) => {
   if (err.name === 'CastError') {
     statusCode = 404;
     message = 'Resource not found';
-  }
-
-  // Handle express-validator errors
-  if (err instanceof ValidationError) {
-    statusCode = 400;
-    message = 'Validation error';
-    errors = err.array().map(e => ({
-      field: e.param,
-      message: e.msg
-    }));
   }
 
   // Log error in development

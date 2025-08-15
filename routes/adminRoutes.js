@@ -11,10 +11,6 @@ import {
   updateRole
 } from "../controllers/adminController.js";
 import { 
-  getAllOrders, 
-  updateOrderStatus 
-} from "../controllers/adminOrderController.js";
-import { 
   productValidationRules, 
   bulkProductValidationRules,
   inventoryValidationRules 
@@ -114,15 +110,5 @@ router.get("/low-stock", protect, adminOnly, async (req, res) => {
     });
   }
 });
-
-// @desc    Get all orders
-// @route   GET /api/admin/orders
-// @access  Private/Admin
-router.get("/orders", protect, adminOnly, getAllOrders);
-
-// @desc    Update order status
-// @route   PUT /api/admin/orders/:id
-// @access  Private/Admin
-router.put("/orders/:id", protect, adminOnly, updateOrderStatus);
 
 export default router;
