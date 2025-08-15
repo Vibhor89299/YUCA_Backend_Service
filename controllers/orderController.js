@@ -1,6 +1,7 @@
 import Order from '../models/Order.js';
 import Product from '../models/Product.js';
 import { validationResult } from 'express-validator';
+import mongoose from 'mongoose';
 
 export const createOrder = async (req, res) => {
   const errors = validationResult(req);

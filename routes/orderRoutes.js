@@ -25,7 +25,7 @@ router.post(
 // @route   GET /api/orders/:id
 // @desc    Get order by ID
 // @access  Private
-router.get("/:id", protect, getOrder);
+
 
 // @route   GET /api/orders/my
 // @desc    Get logged in user orders
@@ -41,6 +41,8 @@ router.get("/my", protect, async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
+
+router.get("/:id", protect, getOrder);
 
 // @route   GET /api/orders
 // @desc    Get all orders (Admin only)
@@ -63,6 +65,7 @@ router.get("/", protect, adminOnly, async (req, res) => {
 // @access  Private/Admin
 router.put("/:id", protect, adminOnly, async (req, res) => {
   try {
+    console.log('Data is',req.params.id);
     const { status } = req.body;
     const order = await Order.findById(req.params.id);
     

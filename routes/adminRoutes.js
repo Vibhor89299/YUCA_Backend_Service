@@ -1,11 +1,14 @@
 import express from "express";
 import { protect, adminOnly } from "../middlewares/authMiddleware.js";
 import { 
-  createProduct, 
+  createProduct,
+  createProductsBulk,
   updateProduct, 
   deleteProduct, 
   updateInventory,
-  getProductsAdmin
+  getProductsAdmin,
+  deleteUser,
+  updateRole
 } from "../controllers/adminController.js";
 import { 
   getAllOrders, 
@@ -13,10 +16,11 @@ import {
 } from "../controllers/adminOrderController.js";
 import { 
   productValidationRules, 
+  bulkProductValidationRules,
   inventoryValidationRules 
 } from "../middleware/validators/productValidator.js";
 import { validate } from "../middleware/validationMiddleware.js";
-
+import Product from "../models/Product.js"
 const router = express.Router();
 
 // @desc    Create a new product
@@ -30,6 +34,30 @@ router.post(
   validate,
   createProduct
 );
+
+router.post(
+  "/bulk/createProducts",
+  protect,
+  adminOnly,
+  bulkProductValidationRules(),
+  validate,
+  createProductsBulk
+);
+
+
+router.patch("/users/:userId/role",
+  protect,
+  adminOnly,
+  updateRole,
+);
+
+
+router.delete("/users/:userId/",
+  protect,
+  adminOnly,
+  deleteUser,
+)
+
 
 // @desc    Get all products with pagination
 // @route   GET /api/admin/products

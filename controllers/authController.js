@@ -135,3 +135,21 @@ export const getProfile = async (req, res) => {
     });
   }
 };
+
+
+export const getAdminAllUser=async(req,res)=>{
+
+ try 
+  { const alluser = await User.find();
+  res.status(200).json({
+    success:true,
+    message:alluser
+  })
+
+ } catch (error) {
+  res.status(500).json({
+    success:true,
+    message:error
+  })
+ }
+}

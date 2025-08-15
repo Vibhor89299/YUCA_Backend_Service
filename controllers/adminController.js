@@ -1,5 +1,6 @@
 import Product from '../models/Product.js';
 import mongoose from 'mongoose';
+import User from '../models/User.js';
 
 // @desc    Create a new product
 // @route   POST /api/admin/products
@@ -7,7 +8,13 @@ import mongoose from 'mongoose';
 export const createProduct = async (req, res) => {
   try {
     const { name, description, price, countInStock, image, category } = req.body;
-    
+    const existingProduct = await Product.findOne({ name });
+    if (existingProduct) {
+      return res.status(400).json({
+        success: false,
+        message: `Product "${name}" already exists`
+      });
+    }
     const product = new Product({
       name,
       description,
@@ -29,6 +36,93 @@ export const createProduct = async (req, res) => {
     });
   }
 };
+
+export const createProductsBulk = async (req, res) => {
+  try {
+    const productsData = req.body;
+
+    const incomingNames = productsData.map(p => p.name);
+
+    // Find existing products with these names
+    const existingProducts = await Product.find({ name: { $in: incomingNames } });
+    const existingNames = existingProducts.map(p => p.name);
+
+    const productsToInsert = productsData
+    .filter(prod => !existingNames.includes(prod.name))
+    .map(prod => ({
+      name: prod.name,
+      description: prod.description,
+      price: prod.price,
+      countInStock: prod.countInStock || 0,
+      image: prod.image || '/images/sample.jpg',
+      category: prod.category,
+      user: req.user._id
+    }));
+
+    const createdProducts = await Product.insertMany(productsToInsert);
+
+    res.status(200).json({
+      success: true,
+      message: `${createdProducts.length} products created successfully`,
+      data: createdProducts
+    });
+  } catch (error) {
+    console.error('Error creating products:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error creating products',
+      error: error.message 
+    });
+  }
+};
+
+
+
+export const updateRole = async(req,res)=>{
+  try {
+    const {userId} = req.params;
+    const {role} = req.body;
+    if(!role){
+      return res.status(400).json({message:"Role is required"});
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(400).json({message:"User not found"});
+    }
+
+    user.role = role;
+    await user.save();
+    res.status(200).json({
+      message: `User role updated to '${role}' successfully`
+    });
+  } catch (error) {
+    console.error("Error updating user role:", error);
+    res.status(500).json({
+      message: "Error updating user role",
+      error: error.message,
+    });
+  }
+}
+
+
+export const deleteUser = async(req,res) =>{
+  try {
+    const {userId} = req.params;
+    console.log("USerId is ",userId);
+    const user  = await User.findById(userId);
+    if(!user){
+      return res.status(404).json({message:"User not found"});
+    }
+    await user.deleteOne();
+    res.status(200).json({ message: 'User removed' });
+  } catch (error) {
+    res.status(500).json({ 
+      message: 'Error in deleting the user',
+      error: error.message 
+    });
+  }
+}
 
 // @desc    Update a product
 // @route   PUT /api/admin/products/:id
@@ -122,7 +216,7 @@ export const deleteProduct = async (req, res) => {
       return res.status(404).json({ message: 'Product not found' });
     }
     
-    await product.remove();
+    await product.deleteOne();
     
     res.json({ message: 'Product removed' });
   } catch (error) {
