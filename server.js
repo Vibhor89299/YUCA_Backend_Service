@@ -40,7 +40,13 @@ app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 // Serving static files
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Health check route
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
 
 // Routes
 app.use("/api/auth", authRoutes);
