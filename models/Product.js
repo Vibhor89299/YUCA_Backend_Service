@@ -50,6 +50,9 @@ const productSchema = new mongoose.Schema(
       type: String,
       default: '/images/sample.jpg'
     },
+    images: [{
+      type: String
+    }],
     rating: {
       type: Number,
       default: 0
