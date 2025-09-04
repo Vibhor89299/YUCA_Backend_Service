@@ -1,6 +1,7 @@
 import express from 'express';
 import { body } from 'express-validator';
 import { addToCart, getCart, updateCartItem, removeFromCart, clearCart } from '../controllers/cartController.js';
+import { syncGuestCart } from '../controllers/cartSync.js';
 import { protect } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
@@ -44,5 +45,19 @@ router.delete('/:productId', protect, removeFromCart);
 // @desc    Clear entire cart
 // @access  Private
 router.delete('/', protect, clearCart);
+
+// @route   POST /api/cart/sync
+// @desc    Sync guest cart with user cart after login
+// @access  Private
+router.post(
+  '/sync',
+  protect,
+  [
+    body('items').isArray().withMessage('Items must be an array'),
+    body('items.*.id').notEmpty().withMessage('Each item must have a product ID'),
+    body('items.*.quantity').isInt({ min: 1 }).withMessage('Each item must have a valid quantity')
+  ],
+  syncGuestCart
+);
 
 export default router;

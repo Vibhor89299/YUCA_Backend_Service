@@ -39,15 +39,33 @@ export const addToCart = async (req, res) => {
 
     await user.save();
 
+    // Get updated cart
+    const updatedUser = await User.findById(userId).populate({
+      path: 'cart.productId',
+      model: 'Product'
+    });
+
+    // Transform cart data
+    const cartItems = updatedUser.cart.map(item => ({
+      id: item.productId._id,
+      quantity: item.quantity,
+      product: {
+        id: item.productId._id,
+        name: item.productId.name,
+        price: item.productId.price,
+        image: item.productId.image,
+        inStock: item.productId.inStock,
+        brand: item.productId.brand || 'YUCA'
+      }
+    }));
+
+    const total = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+
     res.status(200).json({
       message: 'Product added to cart',
-      product: {
-        id: product._id,
-        name: product.name,
-        price: product.price,
-        quantity,
-        image: product.image
-      }
+      items: cartItems,
+      total,
+      itemCount: cartItems.reduce((sum, item) => sum + item.quantity, 0)
     });
 
   } catch (error) {
@@ -70,18 +88,22 @@ export const getCart = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Transform cart data
+    // Transform cart data to match frontend structure
     const cartItems = user.cart.map(item => ({
       id: item.productId._id,
-      name: item.productId.name,
-      price: item.productId.price,
       quantity: item.quantity,
-      image: item.productId.image,
-      stock: item.productId.inStock ? 999 : 0
+      product: {
+        id: item.productId._id,
+        name: item.productId.name,
+        price: item.productId.price,
+        image: item.productId.image,
+        inStock: item.productId.inStock,
+        brand: item.productId.brand || 'YUCA'
+      }
     }));
 
     // Calculate total
-    const total = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const total = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
 
     res.status(200).json({ 
       items: cartItems, 
@@ -121,7 +143,34 @@ export const updateCartItem = async (req, res) => {
     cartItem.quantity = quantity;
     await user.save();
 
-    res.status(200).json({ message: 'Cart item updated successfully' });
+    // Get updated cart with product details
+    const updatedUser = await User.findById(userId).populate({
+      path: 'cart.productId',
+      model: 'Product'
+    });
+
+    // Transform cart data
+    const cartItems = updatedUser.cart.map(item => ({
+      id: item.productId._id,
+      quantity: item.quantity,
+      product: {
+        id: item.productId._id,
+        name: item.productId.name,
+        price: item.productId.price,
+        image: item.productId.image,
+        inStock: item.productId.inStock,
+        brand: item.productId.brand || 'YUCA'
+      }
+    }));
+
+    const total = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+
+    res.status(200).json({
+      message: 'Cart item updated successfully',
+      items: cartItems,
+      total,
+      itemCount: cartItems.reduce((sum, item) => sum + item.quantity, 0)
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
@@ -144,7 +193,34 @@ export const removeFromCart = async (req, res) => {
 
     await user.save();
 
-    res.status(200).json({ message: 'Item removed from cart' });
+    // Get updated cart with product details
+    const updatedUser = await User.findById(userId).populate({
+      path: 'cart.productId',
+      model: 'Product'
+    });
+
+    // Transform cart data
+    const cartItems = updatedUser.cart.map(item => ({
+      id: item.productId._id,
+      quantity: item.quantity,
+      product: {
+        id: item.productId._id,
+        name: item.productId.name,
+        price: item.productId.price,
+        image: item.productId.image,
+        inStock: item.productId.inStock,
+        brand: item.productId.brand || 'YUCA'
+      }
+    }));
+
+    const total = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+
+    res.status(200).json({
+      message: 'Item removed from cart',
+      items: cartItems,
+      total,
+      itemCount: cartItems.reduce((sum, item) => sum + item.quantity, 0)
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
