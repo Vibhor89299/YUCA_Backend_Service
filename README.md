@@ -230,7 +230,7 @@ GET /low-stock
 3. Create a `.env` file in the root directory and add your environment variables:
    ```env
    NODE_ENV=development
-   PORT=5000
+   PORT=5001
    MONGO_URI=mongodb://localhost:27017/yuca_lifestyle
    JWT_SECRET=your_jwt_secret
    JWT_EXPIRE=30d
@@ -293,7 +293,7 @@ npm run test:coverage
 
 2. Run the container:
    ```bash
-   docker run -p 5000:5000 --env-file .env yuca-lifestyle-backend
+   docker run -p 5001:5001 --env-file .env yuca-lifestyle-backend
    ```
 
 ## 📄 License
@@ -477,7 +477,7 @@ npm install
 # Create .env file
 JWT_SECRET=your_jwt_secret_key
 MONGODB_URI=mongodb://localhost:27017/ecommerce
-PORT=5000
+PORT=5001
 ```
 
 4. Start the server
@@ -491,7 +491,7 @@ npm start
 
 1. **Register a new user:**
 ```bash
-curl -X POST http://localhost:5000/api/auth/register \
+curl -X POST http://localhost:5001/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Alice Smith",
@@ -502,7 +502,7 @@ curl -X POST http://localhost:5000/api/auth/register \
 
 2. **Login to get JWT token:**
 ```bash
-curl -X POST http://localhost:5000/api/auth/login \
+curl -X POST http://localhost:5001/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "alice@example.com",
@@ -512,7 +512,7 @@ curl -X POST http://localhost:5000/api/auth/login \
 
 3. **Create an order:**
 ```bash
-curl -X POST http://localhost:5000/api/orders \
+curl -X POST http://localhost:5001/api/orders \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -525,7 +525,7 @@ curl -X POST http://localhost:5000/api/orders \
 
 1. **Create a product (Admin only):**
 ```bash
-curl -X POST http://localhost:5000/api/admin/products \
+curl -X POST http://localhost:5001/api/admin/products \
   -H "Authorization: Bearer ADMIN_JWT_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -539,7 +539,7 @@ curl -X POST http://localhost:5000/api/admin/products \
 
 2. **Check low stock items:**
 ```bash
-curl -X GET http://localhost:5000/api/admin/low-stock \
+curl -X GET http://localhost:5001/api/admin/low-stock \
   -H "Authorization: Bearer ADMIN_JWT_TOKEN"
 ```
 

@@ -1,0 +1,235 @@
+{
+  "info": {
+    "name": "Yuca Lifestyle Payment API",
+    "description": "Collection for testing Razorpay payment integration",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{jwt_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:5001/api",
+      "type": "string"
+    },
+    {
+      "key": "jwt_token",
+      "value": "your_jwt_token_here",
+      "type": "string"
+    },
+    {
+      "key": "order_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "payment_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "razorpay_order_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Orders",
+      "item": [
+        {
+          "name": "Create Order",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [\n    {\n      \"productId\": \"64f1a2b3c4d5e6f7g8h9i0j1\",\n      \"quantity\": 2\n    }\n  ],\n  \"shippingAddress\": {\n    \"name\": \"John Doe\",\n    \"address\": \"123 Main St\",\n    \"city\": \"Mumbai\",\n    \"state\": \"Maharashtra\",\n    \"pincode\": \"400001\",\n    \"phone\": \"9876543210\"\n  },\n  \"paymentMethod\": \"razorpay\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/orders",
+              "host": ["{{base_url}}"],
+              "path": ["orders"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Payments",
+      "item": [
+        {
+          "name": "Create Payment Order",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('razorpay_order_id', response.razorpayOrder.id);",
+                  "    pm.collectionVariables.set('payment_id', response.payment.id);",
+                  "    pm.collectionVariables.set('order_id', response.payment.notes.orderId);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"{{order_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/payments/create-order",
+              "host": ["{{base_url}}"],
+              "path": ["payments", "create-order"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Verify Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"razorpayOrderId\": \"{{razorpay_order_id}}\",\n  \"razorpayPaymentId\": \"pay_test_payment_id\",\n  \"razorpaySignature\": \"test_signature\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/payments/verify",
+              "host": ["{{base_url}}"],
+              "path": ["payments", "verify"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Payment Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/payments/{{payment_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["payments", "{{payment_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get User Payments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/payments/user/payments?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["payments", "user", "payments"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Payment Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/payments/status/{{razorpay_order_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["payments", "status", "{{razorpay_order_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Refund (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paymentId\": \"{{payment_id}}\",\n  \"amount\": 100,\n  \"reason\": \"Customer requested refund\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/payments/refund",
+              "host": ["{{base_url}}"],
+              "path": ["payments", "refund"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

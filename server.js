@@ -11,6 +11,8 @@ import adminRoutes from "./routes/adminRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import cartRoutes from "./routes/cartRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
+import paymentRoutes from "./routes/paymentRoutes.js";
+import guestRoutes from "./routes/guestRoutes.js";
 import { notFound, errorHandler } from './middleware/errorMiddleware.js';
 
 // Load environment variables
@@ -54,6 +56,8 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/products", productRoutes);
+app.use("/api/payments", paymentRoutes);
+app.use("/api/guests", guestRoutes);
 
 // Handle 404 - Not Found
 app.use(notFound);
@@ -62,7 +66,7 @@ app.use(notFound);
 app.use(errorHandler);
 
 // Start server
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 const server = app.listen(PORT, () => {
   console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
 });

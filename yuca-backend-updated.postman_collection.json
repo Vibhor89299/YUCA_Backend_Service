@@ -1,0 +1,884 @@
+{
+  "info": {
+    "name": "Yuca Lifestyle Backend API - Complete Collection",
+    "description": "Complete API collection for Yuca Lifestyle e-commerce platform including guest purchases, payments, and all features",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "2.0.0"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{jwt_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:5001/api",
+      "type": "string"
+    },
+    {
+      "key": "jwt_token",
+      "value": "your_jwt_token_here",
+      "type": "string"
+    },
+    {
+      "key": "order_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "payment_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "razorpay_order_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "guest_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "product_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"password123\",\n  \"phone\": \"9876543210\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "register"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('jwt_token', response.token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get User Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/auth/profile",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "profile"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update User Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Updated\",\n  \"phone\": \"9876543211\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/profile",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "profile"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Products",
+      "item": [
+        {
+          "name": "Get All Products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/products?page=1&limit=10&category=all",
+              "host": ["{{base_url}}"],
+              "path": ["products"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "category",
+                  "value": "all"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Product by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('product_id', response._id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/products/{{product_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["products", "{{product_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Search Products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/products/search?q=bowl&page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["products", "search"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "bowl"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Cart",
+      "item": [
+        {
+          "name": "Get Cart",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/cart",
+              "host": ["{{base_url}}"],
+              "path": ["cart"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Add to Cart",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": \"{{product_id}}\",\n  \"quantity\": 2\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/cart",
+              "host": ["{{base_url}}"],
+              "path": ["cart"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Cart Item",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 3\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/cart/{{product_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["cart", "{{product_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Remove from Cart",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/cart/{{product_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["cart", "{{product_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Clear Cart",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/cart",
+              "host": ["{{base_url}}"],
+              "path": ["cart"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Orders",
+      "item": [
+        {
+          "name": "Create Order (Registered User)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('order_id', response.order.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [\n    {\n      \"productId\": \"{{product_id}}\",\n      \"quantity\": 2,\n      \"price\": 1500\n    }\n  ],\n  \"shippingAddress\": {\n    \"firstName\": \"John\",\n    \"lastName\": \"Doe\",\n    \"address\": \"123 Main Street\",\n    \"city\": \"Mumbai\",\n    \"state\": \"Maharashtra\",\n    \"zip\": \"400001\",\n    \"phone\": \"9876543210\"\n  },\n  \"paymentMethod\": \"razorpay\",\n  \"totalPrice\": 3000\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/orders",
+              "host": ["{{base_url}}"],
+              "path": ["orders"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Order (Guest)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('order_id', response.order.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [\n    {\n      \"productId\": \"{{product_id}}\",\n      \"quantity\": 1,\n      \"price\": 1500\n    }\n  ],\n  \"shippingAddress\": {\n    \"firstName\": \"Jane\",\n    \"lastName\": \"Smith\",\n    \"address\": \"456 Oak Avenue\",\n    \"city\": \"Delhi\",\n    \"state\": \"Delhi\",\n    \"zip\": \"110001\",\n    \"phone\": \"9876543211\"\n  },\n  \"paymentMethod\": \"razorpay\",\n  \"totalPrice\": 1500,\n  \"guestInfo\": {\n    \"email\": \"jane@example.com\",\n    \"name\": \"Jane Smith\",\n    \"phone\": \"9876543211\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/orders",
+              "host": ["{{base_url}}"],
+              "path": ["orders"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Orders",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/orders/my",
+              "host": ["{{base_url}}"],
+              "path": ["orders", "my"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Order by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/orders/{{order_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["orders", "{{order_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Track Guest Order",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"jane@example.com\",\n  \"phone\": \"9876543211\",\n  \"orderId\": \"{{order_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/orders/guest/track",
+              "host": ["{{base_url}}"],
+              "path": ["orders", "guest", "track"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Payments",
+      "item": [
+        {
+          "name": "Create Payment Order (Registered User)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('razorpay_order_id', response.razorpayOrder.id);",
+                  "    pm.collectionVariables.set('payment_id', response.payment.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"{{order_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/payments/create-order",
+              "host": ["{{base_url}}"],
+              "path": ["payments", "create-order"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Payment Order (Guest)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('razorpay_order_id', response.razorpayOrder.id);",
+                  "    pm.collectionVariables.set('payment_id', response.payment.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"{{order_id}}\",\n  \"guestInfo\": {\n    \"email\": \"jane@example.com\",\n    \"name\": \"Jane Smith\",\n    \"phone\": \"9876543211\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/payments/create-order",
+              "host": ["{{base_url}}"],
+              "path": ["payments", "create-order"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Verify Payment (Registered User)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"razorpayOrderId\": \"{{razorpay_order_id}}\",\n  \"razorpayPaymentId\": \"pay_test_payment_id\",\n  \"razorpaySignature\": \"test_signature\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/payments/verify",
+              "host": ["{{base_url}}"],
+              "path": ["payments", "verify"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Verify Payment (Guest)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"razorpayOrderId\": \"{{razorpay_order_id}}\",\n  \"razorpayPaymentId\": \"pay_test_payment_id\",\n  \"razorpaySignature\": \"test_signature\",\n  \"guestInfo\": {\n    \"email\": \"jane@example.com\",\n    \"phone\": \"9876543211\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/payments/verify",
+              "host": ["{{base_url}}"],
+              "path": ["payments", "verify"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Payment Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/payments/{{payment_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["payments", "{{payment_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get User Payments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/payments/user/payments?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["payments", "user", "payments"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Payment Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/payments/status/{{razorpay_order_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["payments", "status", "{{razorpay_order_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Refund (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paymentId\": \"{{payment_id}}\",\n  \"amount\": 100,\n  \"reason\": \"Customer requested refund\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/payments/refund",
+              "host": ["{{base_url}}"],
+              "path": ["payments", "refund"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Guest Management",
+      "item": [
+        {
+          "name": "Create or Find Guest",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('guest_id', response.guest.guestId);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"guest@example.com\",\n  \"name\": \"Guest User\",\n  \"phone\": \"9876543212\",\n  \"preferences\": {\n    \"newsletter\": true,\n    \"marketing\": false\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/guests",
+              "host": ["{{base_url}}"],
+              "path": ["guests"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Guest by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/guests/{{guest_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["guests", "{{guest_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Guest Orders",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/guests/{{guest_id}}/orders",
+              "host": ["{{base_url}}"],
+              "path": ["guests", "{{guest_id}}", "orders"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Track Guest Order by Email/Phone",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"guest@example.com\",\n  \"phone\": \"9876543212\",\n  \"orderId\": \"{{order_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/guests/track-order",
+              "host": ["{{base_url}}"],
+              "path": ["guests", "track-order"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Convert Guest to User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"guestId\": \"{{guest_id}}\",\n  \"userId\": \"user_id_here\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/guests/convert-to-user",
+              "host": ["{{base_url}}"],
+              "path": ["guests", "convert-to-user"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Guest Preferences",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"preferences\": {\n    \"newsletter\": false,\n    \"marketing\": true\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/guests/{{guest_id}}/preferences",
+              "host": ["{{base_url}}"],
+              "path": ["guests", "{{guest_id}}", "preferences"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Cleanup Old Guests (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/guests/cleanup",
+              "host": ["{{base_url}}"],
+              "path": ["guests", "cleanup"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "Get All Orders (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/orders",
+              "host": ["{{base_url}}"],
+              "path": ["orders"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Order Status (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"Shipped\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/orders/{{order_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["orders", "{{order_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Product (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Luxury Bowl Set\",\n  \"description\": \"Beautiful handcrafted ceramic bowl set\",\n  \"price\": 2500,\n  \"category\": \"Dining\",\n  \"brand\": \"Yuca\",\n  \"countInStock\": 50,\n  \"image\": \"https://example.com/bowl-set.jpg\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/products",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "products"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Product (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Luxury Bowl Set - Updated\",\n  \"price\": 2800,\n  \"countInStock\": 45\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/products/{{product_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "products", "{{product_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Product (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/admin/products/{{product_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "products", "{{product_id}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
