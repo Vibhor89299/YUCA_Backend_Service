@@ -67,8 +67,8 @@ export const createPaymentOrder = async (req, res) => {
       return res.status(400).json({ message: 'Payment already completed for this order' });
     }
 
-    // Create receipt ID
-    const receipt = `receipt_${orderId}_${Date.now()}`;
+    // Create receipt ID (max 40 characters for Razorpay)
+    const receipt = `rcpt_${orderId.toString().slice(-8)}_${Date.now().toString().slice(-8)}`;
 
     // Create Razorpay order
     const razorpayOrder = await createRazorpayOrder(
