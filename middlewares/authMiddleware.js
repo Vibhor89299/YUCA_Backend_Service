@@ -8,9 +8,15 @@ export const protect = async (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    console.log('JWT decoded:', decoded);
     req.user = await User.findById(decoded.id).select("-password");
+    console.log('User found:', req.user ? 'Yes' : 'No');
+    if (req.user) {
+      console.log('User ID:', req.user._id);
+    }
     next();
   } catch (err) {
+    console.log('JWT verification error:', err.message);
     res.status(401).json({ msg: "Invalid token" });
   }
 };

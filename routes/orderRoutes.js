@@ -3,6 +3,8 @@ import { body } from 'express-validator';
 import { createOrder, getOrder, getGuestOrder } from "../controllers/orderController.js";
 import { protect, adminOnly } from "../middlewares/authMiddleware.js";
 import Order from "../models/Order.js";
+import mongoose from 'mongoose';
+import { isValidOrderNumber } from '../utils/orderIdGenerator.js';
 
 const router = express.Router();
 
@@ -42,10 +44,38 @@ router.post(
 // @access  Private
 router.get("/my", protect, async (req, res) => {
   try {
-    const orders = await Order.find({ user: req.user._id })
+    console.log('User from auth middleware:', req.user);
+    console.log('User ID:', req.user?._id || req.user?.id);
+    
+    const userId = req.user?._id || req.user?.id;
+    if (!userId) {
+      return res.status(400).json({ message: 'User ID not found in request' });
+    }
+    
+    const orders = await Order.find({ user: userId })
       .populate('items.product', 'name price image')
       .sort({ createdAt: -1 });
-    res.json(orders);
+    
+    const formattedOrders = orders.map(order => ({
+      id: order._id,
+      orderNumber: order.orderNumber || `#ORD-${order._id.toString().slice(-6).toUpperCase()}`,
+      orderUUID: order.orderUUID || null,
+      items: order.items,
+      shippingAddress: order.shippingAddress,
+      totalPrice: order.totalPrice,
+      status: order.status,
+      paymentStatus: order.paymentStatus,
+      paymentMethod: order.paymentMethod,
+      orderType: order.orderType,
+      deliveredAt: order.deliveredAt,
+      createdAt: order.createdAt,
+      updatedAt: order.updatedAt
+    }));
+    
+    res.json({
+      success: true,
+      orders: formattedOrders
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
@@ -77,9 +107,33 @@ router.get("/", protect, adminOnly, async (req, res) => {
   try {
     const orders = await Order.find()
       .populate('user', 'id name email')
+      .populate('guest', 'guestId email name')
       .populate('items.product', 'name price image')
       .sort({ createdAt: -1 });
-    res.json(orders);
+    
+    const formattedOrders = orders.map(order => ({
+      id: order._id,
+      orderNumber: order.orderNumber || `#ORD-${order._id.toString().slice(-6).toUpperCase()}`,
+      orderUUID: order.orderUUID || null,
+      items: order.items,
+      shippingAddress: order.shippingAddress,
+      guestInfo: order.guestInfo,
+      totalPrice: order.totalPrice,
+      status: order.status,
+      paymentStatus: order.paymentStatus,
+      paymentMethod: order.paymentMethod,
+      orderType: order.orderType,
+      deliveredAt: order.deliveredAt,
+      createdAt: order.createdAt,
+      updatedAt: order.updatedAt,
+      user: order.user,
+      guest: order.guest
+    }));
+    
+    res.json({
+      success: true,
+      orders: formattedOrders
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
@@ -91,9 +145,20 @@ router.get("/", protect, adminOnly, async (req, res) => {
 // @access  Private/Admin
 router.put("/:id", protect, adminOnly, async (req, res) => {
   try {
-    console.log('Data is',req.params.id);
+    const { id } = req.params;
     const { status } = req.body;
-    const order = await Order.findById(req.params.id);
+    let order;
+
+    // Find order by different ID types
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      order = await Order.findById(id);
+    } else if (isValidOrderNumber(id)) {
+      order = await Order.findOne({ orderNumber: id });
+    } else if (id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i)) {
+      order = await Order.findOne({ orderUUID: id });
+    } else {
+      return res.status(400).json({ message: 'Invalid order ID format' });
+    }
     
     if (!order) {
       return res.status(404).json({ message: 'Order not found' });
@@ -102,7 +167,16 @@ router.put("/:id", protect, adminOnly, async (req, res) => {
     order.status = status;
     await order.save();
     
-    res.json(order);
+    res.json({
+      success: true,
+      order: {
+        id: order._id,
+        orderNumber: order.orderNumber || `#ORD-${order._id.toString().slice(-6).toUpperCase()}`,
+        orderUUID: order.orderUUID || null,
+        status: order.status,
+        updatedAt: order.updatedAt
+      }
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });

@@ -1,6 +1,22 @@
 import mongoose from "mongoose";
 
 const orderSchema = new mongoose.Schema({
+  // UUID for better ID management and relations
+  orderUUID: {
+    type: String,
+    required: true,
+    unique: true,
+    default: function() {
+      const { v4: uuidv4 } = require('uuid');
+      return uuidv4();
+    }
+  },
+  // Systematic order number for customer-facing reference
+  orderNumber: {
+    type: String,
+    required: true,
+    unique: true
+  },
   user: { 
     type: mongoose.Schema.Types.ObjectId, 
     ref: "User",
@@ -78,6 +94,8 @@ orderSchema.index({ guest: 1 });
 orderSchema.index({ status: 1 });
 orderSchema.index({ orderType: 1 });
 orderSchema.index({ createdAt: -1 });
+orderSchema.index({ orderUUID: 1 });
+orderSchema.index({ orderNumber: 1 });
 
 const Order = mongoose.model("Order", orderSchema);
 export default Order;

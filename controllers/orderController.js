@@ -3,6 +3,7 @@ import Product from '../models/Product.js';
 import Guest from '../models/Guest.js';
 import { validationResult } from 'express-validator';
 import mongoose from 'mongoose';
+import { generateOrderNumber, generateOrderUUID, isValidOrderNumber } from '../utils/orderIdGenerator.js';
 
 export const createOrder = async (req, res) => {
   const errors = validationResult(req);
@@ -71,14 +72,24 @@ export const createOrder = async (req, res) => {
       guestId = guest._id;
     }
 
+    // Generate unique order identifiers
+    const orderNumber = await generateOrderNumber();
+    const orderUUID = generateOrderUUID();
+
+    console.log('Generated order identifiers:', { orderNumber, orderUUID });
+
     // Create order
     const orderData = {
+      orderNumber,
+      orderUUID,
       items: orderItems,
       shippingAddress,
       paymentMethod,
       totalPrice,
       status: 'Processing'
     };
+
+    console.log('Order data before save:', orderData);
 
     if (isGuestOrder) {
       orderData.guest = guestId;
@@ -94,12 +105,21 @@ export const createOrder = async (req, res) => {
     const order = new Order(orderData);
 
     await order.save({ session });
+    console.log('Order after save:', {
+      id: order._id,
+      orderNumber: order.orderNumber,
+      orderUUID: order.orderUUID,
+      status: order.status
+    });
+    
     await session.commitTransaction();
     
     res.status(201).json({
       message: 'Order created successfully',
       order: {
         id: order._id,
+        orderNumber: order.orderNumber,
+        orderUUID: order.orderUUID,
         items: order.items,
         totalPrice: order.totalPrice,
         status: order.status,
@@ -120,9 +140,33 @@ export const createOrder = async (req, res) => {
 
 export const getOrder = async (req, res) => {
   try {
-    const order = await Order.findById(req.params.id)
-      .populate('user', 'name email')
-      .populate('guest', 'guestId email name');
+    const { id } = req.params;
+    let order;
+
+    // Check if the ID is a valid MongoDB ObjectId
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      order = await Order.findById(id)
+        .populate('user', 'name email')
+        .populate('guest', 'guestId email name')
+        .populate('items.product', 'name price image');
+    } 
+    // Check if it's a valid order number format
+    else if (isValidOrderNumber(id)) {
+      order = await Order.findOne({ orderNumber: id })
+        .populate('user', 'name email')
+        .populate('guest', 'guestId email name')
+        .populate('items.product', 'name price image');
+    }
+    // Check if it's a UUID
+    else if (id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i)) {
+      order = await Order.findOne({ orderUUID: id })
+        .populate('user', 'name email')
+        .populate('guest', 'guestId email name')
+        .populate('items.product', 'name price image');
+    }
+    else {
+      return res.status(400).json({ message: 'Invalid order ID format' });
+    }
     
     if (!order) {
       return res.status(404).json({ message: 'Order not found' });
@@ -143,7 +187,27 @@ export const getOrder = async (req, res) => {
       }
     }
 
-    res.status(200).json(order);
+    res.status(200).json({
+      success: true,
+      order: {
+        id: order._id,
+        orderNumber: order.orderNumber || `#ORD-${order._id.slice(-6).toUpperCase()}`,
+        orderUUID: order.orderUUID || null,
+        items: order.items,
+        shippingAddress: order.shippingAddress,
+        guestInfo: order.guestInfo,
+        totalPrice: order.totalPrice,
+        status: order.status,
+        paymentStatus: order.paymentStatus,
+        paymentMethod: order.paymentMethod,
+        orderType: order.orderType,
+        deliveredAt: order.deliveredAt,
+        createdAt: order.createdAt,
+        updatedAt: order.updatedAt,
+        user: order.user,
+        guest: order.guest
+      }
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
@@ -171,18 +235,49 @@ export const getGuestOrder = async (req, res) => {
       return res.status(404).json({ message: 'No orders found with this email and phone' });
     }
 
-    // Find order
-    const order = await Order.findOne({ 
-      _id: orderId,
-      guest: guest._id 
-    }).populate('items.product', 'name price image');
+    // Find order by different ID types
+    let order;
+    if (mongoose.Types.ObjectId.isValid(orderId)) {
+      order = await Order.findOne({ 
+        _id: orderId,
+        guest: guest._id 
+      }).populate('items.product', 'name price image');
+    } else if (isValidOrderNumber(orderId)) {
+      order = await Order.findOne({ 
+        orderNumber: orderId,
+        guest: guest._id 
+      }).populate('items.product', 'name price image');
+    } else if (orderId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i)) {
+      order = await Order.findOne({ 
+        orderUUID: orderId,
+        guest: guest._id 
+      }).populate('items.product', 'name price image');
+    } else {
+      return res.status(400).json({ message: 'Invalid order ID format' });
+    }
 
     if (!order) {
       return res.status(404).json({ message: 'Order not found' });
     }
 
     res.status(200).json({
-      order,
+      success: true,
+      order: {
+        id: order._id,
+        orderNumber: order.orderNumber || `#ORD-${order._id.slice(-6).toUpperCase()}`,
+        orderUUID: order.orderUUID || null,
+        items: order.items,
+        shippingAddress: order.shippingAddress,
+        guestInfo: order.guestInfo,
+        totalPrice: order.totalPrice,
+        status: order.status,
+        paymentStatus: order.paymentStatus,
+        paymentMethod: order.paymentMethod,
+        orderType: order.orderType,
+        deliveredAt: order.deliveredAt,
+        createdAt: order.createdAt,
+        updatedAt: order.updatedAt
+      },
       guest: {
         id: guest._id,
         guestId: guest.guestId,
