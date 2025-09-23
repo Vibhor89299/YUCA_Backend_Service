@@ -9,6 +9,7 @@ import {
 } from '../config/razorpay.js';
 import { validationResult } from 'express-validator';
 import mongoose from 'mongoose';
+import crypto from 'crypto';
 
 // Create a new payment order
 export const createPaymentOrder = async (req, res) => {
@@ -128,7 +129,8 @@ export const createPaymentOrder = async (req, res) => {
         currency: razorpayOrder.currency,
         receipt: razorpayOrder.receipt,
         status: razorpayOrder.status
-      }
+      },
+      key_id: process.env.RAZORPAY_KEY_ID
     });
 
   } catch (error) {
@@ -435,5 +437,195 @@ export const getPaymentStatus = async (req, res) => {
   } catch (error) {
     console.error('Error fetching payment status:', error);
     res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Handle Razorpay webhook
+export const handleWebhook = async (req, res) => {
+  try {
+    const signature = req.headers['x-razorpay-signature'];
+    const body = req.body;
+
+    if (!signature) {
+      return res.status(400).json({ message: 'Missing signature' });
+    }
+
+    // Verify webhook signature
+    const expectedSignature = crypto
+      .createHmac('sha256', process.env.RAZORPAY_WEBHOOK_SECRET)
+      .update(body)
+      .digest('hex');
+
+    if (signature !== expectedSignature) {
+      console.error('Invalid webhook signature');
+      return res.status(400).json({ message: 'Invalid signature' });
+    }
+
+    const event = JSON.parse(body.toString());
+    console.log('Webhook received:', event.event);
+
+    // Handle different webhook events
+    switch (event.event) {
+      case 'payment.captured':
+        await handlePaymentCaptured(event.payload.payment.entity);
+        break;
+      case 'order.paid':
+        await handleOrderPaid(event.payload.order.entity);
+        break;
+      case 'payment.failed':
+        await handlePaymentFailed(event.payload.payment.entity);
+        break;
+      default:
+        console.log('Unhandled webhook event:', event.event);
+    }
+
+    res.status(200).json({ message: 'Webhook processed successfully' });
+  } catch (error) {
+    console.error('Error processing webhook:', error);
+    res.status(500).json({ message: 'Webhook processing failed' });
+  }
+};
+
+// Handle payment captured webhook
+const handlePaymentCaptured = async (paymentEntity) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const { order_id, id: razorpayPaymentId, status, method } = paymentEntity;
+
+    // Find payment by Razorpay order ID
+    const payment = await Payment.findOne({ 
+      razorpayOrderId: order_id 
+    }).session(session);
+
+    if (!payment) {
+      console.error('Payment not found for order:', order_id);
+      await session.abortTransaction();
+      return;
+    }
+
+    // Check if payment is already processed
+    if (payment.status === 'paid') {
+      console.log('Payment already processed:', order_id);
+      await session.abortTransaction();
+      return;
+    }
+
+    // Update payment record
+    payment.razorpayPaymentId = razorpayPaymentId;
+    payment.status = status === 'captured' ? 'paid' : 'failed';
+    payment.paymentMethod = method;
+    payment.updatedAt = new Date();
+
+    await payment.save({ session });
+
+    // Update order status if payment is successful
+    if (payment.status === 'paid') {
+      const order = await Order.findById(payment.order).session(session);
+      if (order) {
+        order.status = 'Paid';
+        order.paymentStatus = 'paid';
+        order.paymentId = payment._id;
+        await order.save({ session });
+      }
+    }
+
+    await session.commitTransaction();
+    console.log('Payment captured webhook processed successfully:', order_id);
+  } catch (error) {
+    await session.abortTransaction();
+    console.error('Error processing payment captured webhook:', error);
+  } finally {
+    session.endSession();
+  }
+};
+
+// Handle order paid webhook
+const handleOrderPaid = async (orderEntity) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const { id: razorpayOrderId, status } = orderEntity;
+
+    // Find payment by Razorpay order ID
+    const payment = await Payment.findOne({ 
+      razorpayOrderId: razorpayOrderId 
+    }).session(session);
+
+    if (!payment) {
+      console.error('Payment not found for order:', razorpayOrderId);
+      await session.abortTransaction();
+      return;
+    }
+
+    // Update payment status
+    if (status === 'paid' && payment.status !== 'paid') {
+      payment.status = 'paid';
+      payment.updatedAt = new Date();
+      await payment.save({ session });
+
+      // Update order status
+      const order = await Order.findById(payment.order).session(session);
+      if (order) {
+        order.status = 'Paid';
+        order.paymentStatus = 'paid';
+        order.paymentId = payment._id;
+        await order.save({ session });
+      }
+    }
+
+    await session.commitTransaction();
+    console.log('Order paid webhook processed successfully:', razorpayOrderId);
+  } catch (error) {
+    await session.abortTransaction();
+    console.error('Error processing order paid webhook:', error);
+  } finally {
+    session.endSession();
+  }
+};
+
+// Handle payment failed webhook
+const handlePaymentFailed = async (paymentEntity) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const { order_id, id: razorpayPaymentId, status } = paymentEntity;
+
+    // Find payment by Razorpay order ID
+    const payment = await Payment.findOne({ 
+      razorpayOrderId: order_id 
+    }).session(session);
+
+    if (!payment) {
+      console.error('Payment not found for order:', order_id);
+      await session.abortTransaction();
+      return;
+    }
+
+    // Update payment status
+    payment.razorpayPaymentId = razorpayPaymentId;
+    payment.status = 'failed';
+    payment.updatedAt = new Date();
+
+    await payment.save({ session });
+
+    // Update order status
+    const order = await Order.findById(payment.order).session(session);
+    if (order) {
+      order.status = 'Payment Failed';
+      order.paymentStatus = 'failed';
+      await order.save({ session });
+    }
+
+    await session.commitTransaction();
+    console.log('Payment failed webhook processed successfully:', order_id);
+  } catch (error) {
+    await session.abortTransaction();
+    console.error('Error processing payment failed webhook:', error);
+  } finally {
+    session.endSession();
   }
 };

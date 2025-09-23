@@ -7,7 +7,8 @@ import {
   getPayment,
   getUserPayments,
   createRefundPayment,
-  getPaymentStatus
+  getPaymentStatus,
+  handleWebhook
 } from '../controllers/paymentController.js';
 import {
   validateCreatePaymentOrder,
@@ -102,6 +103,16 @@ router.post(
   adminOnly,
   validateCreateRefund,
   createRefundPayment
+);
+
+// @desc    Handle Razorpay webhook
+// @route   POST /api/payments/webhook
+// @access  Public (Razorpay only)
+router.post(
+  '/webhook',
+  // Raw body parser for webhook signature verification
+  express.raw({ type: 'application/json' }),
+  handleWebhook
 );
 
 export default router;

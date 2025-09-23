@@ -30,6 +30,7 @@ PORT=5001
 # Razorpay Configuration
 RAZORPAY_KEY_ID=rzp_test_your_key_id_here
 RAZORPAY_KEY_SECRET=your_key_secret_here
+RAZORPAY_WEBHOOK_SECRET=your_webhook_secret_here
 
 # Frontend URL
 FRONTEND_URL=http://localhost:3000
@@ -70,6 +71,28 @@ The following files have been added to your backend:
 ### Scripts
 - `scripts/testPayment.js` - Integration test script
 
+## 🔗 Webhook Setup
+
+### 1. Configure Webhook in Razorpay Dashboard
+
+1. Go to [Razorpay Dashboard](https://dashboard.razorpay.com/)
+2. Navigate to **Settings** → **Webhooks**
+3. Click **Add New Webhook**
+4. Set the webhook URL: `https://yourdomain.com/api/payments/webhook`
+5. Select the following events:
+   - `payment.captured`
+   - `order.paid`
+   - `payment.failed`
+6. Copy the webhook secret and add it to your `.env` file
+
+### 2. Environment Variables
+
+Add the webhook secret to your `.env` file:
+
+```env
+RAZORPAY_WEBHOOK_SECRET=your_webhook_secret_here
+```
+
 ## 🔧 API Endpoints
 
 | Method | Endpoint | Description | Auth Required |
@@ -80,6 +103,7 @@ The following files have been added to your backend:
 | GET | `/api/payments/user/payments` | Get user payments | ✅ |
 | GET | `/api/payments/status/:razorpayOrderId` | Get payment status | ✅ |
 | POST | `/api/payments/refund` | Create refund | ✅ (Admin) |
+| POST | `/api/payments/webhook` | Razorpay webhook handler | ❌ (Public) |
 
 ## 💳 Payment Flow
 
@@ -110,6 +134,10 @@ sequenceDiagram
     Backend->>Razorpay: Verify Signature
     Backend->>Database: Update Payment & Order
     Backend->>Frontend: Payment Verified
+    
+    Note over Razorpay,Backend: Webhook (Backup/Failsafe)
+    Razorpay->>Backend: POST /api/payments/webhook
+    Backend->>Database: Update Payment & Order (if not already updated)
 ```
 
 ## 🧪 Testing
@@ -215,7 +243,7 @@ The API returns appropriate HTTP status codes:
 - **Test Mode**: Use test keys (starting with `rzp_test_`) for development
 - **Live Mode**: Switch to live keys for production
 - **Amounts**: All amounts are stored in paise (smallest currency unit)
-- **Webhooks**: Consider implementing webhooks for real-time updates
+- **Webhooks**: Implemented webhook handler for real-time updates and failsafe
 - **Logging**: All payment operations are logged for audit
 
 ## 🆘 Troubleshooting
@@ -251,7 +279,7 @@ The API returns appropriate HTTP status codes:
 2. Add credentials to your `.env` file
 3. Test the integration using the provided scripts
 4. Integrate with your frontend application
-5. Set up webhooks for real-time updates (optional)
+5. Set up webhooks in Razorpay dashboard (configure webhook URL and events)
 6. Switch to live mode for production
 
 Happy coding! 🚀
