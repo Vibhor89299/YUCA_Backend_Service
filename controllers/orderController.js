@@ -19,7 +19,9 @@ export const createOrder = async (req, res) => {
     const userId = req.user?.id; // Optional for guest orders
     const isGuestOrder = !userId && guestInfo;
 
-    // Validate products and check stock
+    // Validate products and check stock availability
+    // Note: Inventory is only checked here, not reduced
+    // Inventory will be reduced only after successful payment
     let orderItems = [];
     let totalPrice = 0;
 
@@ -41,9 +43,8 @@ export const createOrder = async (req, res) => {
         });
       }
 
-      // Update product stock
-      product.countInStock -= item.quantity;
-      await product.save({ session });
+      // Note: Inventory will be reduced only after successful payment
+      // This ensures only paid orders affect inventory
 
       // Add to order items
       orderItems.push({
@@ -86,7 +87,8 @@ export const createOrder = async (req, res) => {
       shippingAddress,
       paymentMethod,
       totalPrice,
-      status: 'Processing'
+      status: 'Processing',
+      orderType: isGuestOrder ? 'guest' : 'registered'
     };
 
     console.log('Order data before save:', orderData);

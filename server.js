@@ -13,6 +13,7 @@ import cartRoutes from "./routes/cartRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
 import guestRoutes from "./routes/guestRoutes.js";
+import emailRoutes from "./routes/emailRoutes.js";
 import { notFound, errorHandler } from './middleware/errorMiddleware.js';
 
 // Load environment variables
@@ -58,6 +59,7 @@ app.use("/api/cart", cartRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/guests", guestRoutes);
+app.use("/api/email", emailRoutes);
 
 // Handle 404 - Not Found
 app.use(notFound);

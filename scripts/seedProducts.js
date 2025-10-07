@@ -10,103 +10,229 @@ dotenv.config();
 
 const KOSHA_ASSETS_PATH = path.resolve('..', 'frontend', 'public', 'assets', 'kosha');
 
-const PRODUCT_DESCRIPTIONS = {
-  'soap-dish': 'Handcrafted soap dish made from premium materials, perfect for luxury bathrooms.',
-  'toothbrush-holder': 'Elegant toothbrush holder to keep your bathroom organized and stylish.',
-  'enamel-bowl': 'Beautiful enamel bowl set, ideal for serving and decor.',
-  'geo-bowl': 'Geometric design bowl, a modern touch for your kitchen or dining.',
-  'glass': 'Premium glassware for a sophisticated dining experience.',
-  'katori': 'Traditional katori bowls, perfect for serving sides and desserts.',
-  'fork': 'Handcrafted fork, combining style and utility.',
-  'spoon': 'Elegant spoon, perfect for daily use or special occasions.',
-  'tea-cup': 'Classic tea cup for a refined tea experience.',
-  'wine': 'Luxury wine glass for celebrations and fine dining.'
-};
+// Product Sets Configuration (seeded for local development)
+// Notes:
+// - category must be 'kosha' to satisfy the Product model enum
+// - price is set to the discounted retail rate (10% off the final rate)
+// - countInStock uses provided live quantity values
+const PRODUCT_SETS = [
+  {
+    name: 'Geometric Bowl Set',
+    description: 'Premium geometric bowl with coconut wood cutlery set.',
+    items: '1 geometric bowl + 1 set cocnut wood cutlery',
+    countInStock: 5,
+    manufactureCost: 310,
+    packagingCost: 35,
+    profitMultiplier: 2,
+    finalRate: 690.00,
+    discountPercent: 0,
+    rateAfterDiscount: 725.00, // GST 5% final
+    gstPercentage: 5,
+    category: 'kosha',
+    image: '/assets/kosha/GEO-BOWL/geo-bowl/1.png',
+    images: ['/assets/kosha/GEO-BOWL/geo-bowl/1.png', '/assets/kosha/GEO-BOWL/geo-bowl/2.png']
+  },
+  {
+    name: 'Enamel bowl set',
+    description: 'Enamel bowl with coconut wood cutlery. Elegant and durable.',
+    items: '1 enamel bowl + 1 set cocnut wood cutlery',
+    countInStock: 5,
+    manufactureCost: 395,
+    packagingCost: 35,
+    profitMultiplier: 2,
+    finalRate: 860.00,
+    discountPercent: 0,
+    rateAfterDiscount: 905.00,
+    gstPercentage: 5,
+    category: 'kosha',
+    image: '/assets/kosha/ENAMEL BOWL SET/enamel-bowl/1.png',
+    images: ['/assets/kosha/ENAMEL BOWL SET/enamel-bowl/1.png', '/assets/kosha/ENAMEL BOWL SET/enamel-bowl/2.png']
+  },
+  {
+    name: 'Big set',
+    description: '900ml bowl, 2 mini bowls, serving spoon, 2 coconut glasses, 2 shell cutlery sets.',
+    items: '1 900 ml bowl+ 2 mini bowl+ 1 serving spoon + 2 cocmnut glass+ 2 set shell cutlery',
+    countInStock: 5,
+    manufactureCost: 1095,
+    packagingCost: 35,
+    profitMultiplier: 2,
+    finalRate: 2260.00,
+    discountPercent: 0,
+    rateAfterDiscount: 2400.00,
+    gstPercentage: 5,
+    category: 'kosha',
+    image: '/assets/kosha/KATORI/katori/1.png',
+    images: ['/assets/kosha/KATORI/katori/1.png', '/assets/kosha/KATORI/katori/2.png']
+  },
+  {
+    name: 'Bathroom set',
+    description: 'Toothbrush holder and soap tray set.',
+    items: '1 toothbrush holder + 1 soap tray',
+    countInStock: 5,
+    manufactureCost: 300,
+    packagingCost: 35,
+    profitMultiplier: 2,
+    finalRate: 670.00,
+    discountPercent: 0,
+    rateAfterDiscount: 705.00,
+    gstPercentage: 5,
+    category: 'kosha',
+    image: '/assets/kosha/BATHROOM/soap-dish/1.png',
+    images: ['/assets/kosha/BATHROOM/soap-dish/1.png', '/assets/kosha/BATHROOM/toothbrush-holder/1.png']
+  },
+  {
+    name: 'wine glass set',
+    description: '2 wine glasses with a candle.',
+    items: '2 wine glass+ 1 candle',
+    countInStock: 4,
+    manufactureCost: 495,
+    packagingCost: 35,
+    profitMultiplier: 2,
+    finalRate: 1060.00,
+    discountPercent: 0,
+    rateAfterDiscount: 1120.00,
+    gstPercentage: 5,
+    category: 'kosha',
+    image: '/assets/kosha/WINE/wine/1.png',
+    images: ['/assets/kosha/WINE/wine/1.png', '/assets/kosha/WINE/wine/2.png']
+  },
+  {
+    name: 'Tea cup set',
+    description: 'Set of 4 tea cups.',
+    items: '4 tea cups',
+    countInStock: 5,
+    manufactureCost: 800,
+    packagingCost: 35,
+    profitMultiplier: 2,
+    finalRate: 1670.00,
+    discountPercent: 0,
+    rateAfterDiscount: 1800.00,
+    gstPercentage: 5,
+    category: 'kosha',
+    image: '/assets/kosha/TEA CUP/tea-cup/1.png',
+    images: ['/assets/kosha/TEA CUP/tea-cup/1.png', '/assets/kosha/TEA CUP/tea-cup/2.png']
+  },
+  {
+    name: 'Coconut glass set',
+    description: 'Set of 2 coconut glasses.',
+    items: '2 coconut glass set',
+    countInStock: 5,
+    manufactureCost: 250,
+    packagingCost: 35,
+    profitMultiplier: 2,
+    finalRate: 570.00,
+    discountPercent: 0,
+    rateAfterDiscount: 600.00,
+    gstPercentage: 5,
+    category: 'kosha',
+    image: '/assets/kosha/GLASS/glass/1.png',
+    images: ['/assets/kosha/GLASS/glass/1.png', '/assets/kosha/GLASS/glass/2.png']
+  },
+  {
+    name: 'Lid container',
+    description: 'Set of 2 lid containers.',
+    items: '2 lid containers',
+    countInStock: 5,
+    manufactureCost: 310,
+    packagingCost: 35,
+    profitMultiplier: 2,
+    finalRate: 690.00,
+    discountPercent: 0,
+    rateAfterDiscount: 725.00,
+    gstPercentage: 5,
+    category: 'kosha',
+    image: '/assets/kosha/SPOON FOLK/spoon/1.png',
+    images: ['/assets/kosha/SPOON FOLK/spoon/1.png']
+  },
+  {
+    name: '500 ML bowl',
+    description: 'Single 500 ML bowl.',
+    items: '1 500 ML bowl',
+    countInStock: 5,
+    manufactureCost: 125,
+    packagingCost: 35,
+    profitMultiplier: 2,
+    finalRate: 320.00,
+    discountPercent: 0,
+    rateAfterDiscount: 340.00,
+    gstPercentage: 5,
+    category: 'kosha',
+    image: '/assets/kosha/KATORI/katori/1.png',
+    images: ['/assets/kosha/KATORI/katori/1.png']
+  },
+  {
+    name: 'Mini bowl set',
+    description: 'Set of 2 mini bowls.',
+    items: '2 mini bowl set',
+    countInStock: 5,
+    manufactureCost: 190,
+    packagingCost: 35,
+    profitMultiplier: 2,
+    finalRate: 450.00,
+    discountPercent: 0,
+    rateAfterDiscount: 475.00,
+    gstPercentage: 5,
+    category: 'kosha',
+    image: '/assets/kosha/KATORI/katori/2.png',
+    images: ['/assets/kosha/KATORI/katori/2.png']
+  }
+];
 
-const PRODUCT_PRICES = {
-  'soap-dish': 299,
-  'toothbrush-holder': 249,
-  'enamel-bowl': 599,
-  'geo-bowl': 499,
-  'glass': 399,
-  'katori': 199,
-  'fork': 99,
-  'spoon': 99,
-  'tea-cup': 299,
-  'wine': 499
-};
-
-const PRODUCT_STOCK = 10;
+// Calculate final price with GST
+function round2(n) {
+  return Math.round(n * 100) / 100;
+}
 
 async function getAdminUser() {
-  const admin = await User.findOne({ role: 'ADMIN' });
-  if (!admin) throw new Error('No admin user found. Please create an admin user first.');
+  let admin = await User.findOne({ role: 'ADMIN' });
+  if (!admin) {
+    console.log('No admin user found. Creating a default admin user...');
+    admin = new User({
+      name: 'Admin User',
+      email: 'admin@yucalifestyle.com',
+      password: 'admin123',
+      role: 'ADMIN'
+    });
+    await admin.save();
+    console.log('Admin user created successfully.');
+  }
   return admin;
 }
 
-function getAllProductImages() {
-  const products = [];
-  const mainCategories = fs.readdirSync(KOSHA_ASSETS_PATH).filter(f => !f.startsWith('.'));
-  for (const mainCat of mainCategories) {
-    const mainCatPath = path.join(KOSHA_ASSETS_PATH, mainCat);
-    if (!fs.statSync(mainCatPath).isDirectory()) continue;
-    const subCategories = fs.readdirSync(mainCatPath).filter(f => !f.startsWith('.'));
-    for (const subCat of subCategories) {
-      const subCatPath = path.join(mainCatPath, subCat);
-      if (!fs.statSync(subCatPath).isDirectory()) continue;
-      const subCatContents = fs.readdirSync(subCatPath).filter(f => !f.startsWith('.'));
-      // Check if subCat contains folders (product names) or images directly
-      const hasProductFolders = subCatContents.some(f => fs.statSync(path.join(subCatPath, f)).isDirectory());
-      if (hasProductFolders) {
-        // Each folder is a product, images inside are variants/images
-        for (const prodFolder of subCatContents) {
-          const prodFolderPath = path.join(subCatPath, prodFolder);
-          if (!fs.statSync(prodFolderPath).isDirectory()) continue;
-          const images = fs.readdirSync(prodFolderPath).filter(f => f.endsWith('.png') || f.endsWith('.jpg'));
-          if (images.length === 0) continue;
-          const productKey = prodFolder.toLowerCase();
-          const imgArr = images.map(img => `/assets/kosha/${mainCat}/${subCat}/${prodFolder}/${img}`);
-          products.push({
-            name: `${subCat.replace(/-/g, ' ')} - ${prodFolder.replace(/-/g, ' ')}`,
-            description: PRODUCT_DESCRIPTIONS[productKey] || 'Premium handcrafted product from Kosha collection.',
-            price: PRODUCT_PRICES[productKey] || 299,
-            countInStock: PRODUCT_STOCK,
-            category: 'kosha',
-            image: imgArr[0],
-            images: imgArr
-          });
-        }
-      } else {
-        // Images directly under subCat, subCat is the product name
-        const images = subCatContents.filter(f => f.endsWith('.png') || f.endsWith('.jpg'));
-        if (images.length === 0) continue;
-        const productKey = subCat.toLowerCase();
-        const imgArr = images.map(img => `/assets/kosha/${mainCat}/${subCat}/${img}`);
-        products.push({
-          name: subCat.replace(/-/g, ' '),
-          description: PRODUCT_DESCRIPTIONS[productKey] || 'Premium handcrafted product from Kosha collection.',
-          price: PRODUCT_PRICES[productKey] || 299,
-          countInStock: PRODUCT_STOCK,
-          category: 'kosha',
-          image: imgArr[0],
-          images: imgArr
-        });
-      }
-    }
-  }
-  return products;
+function getProductSets() {
+  return PRODUCT_SETS.map(set => ({
+    name: set.name,
+    description: set.description,
+    // Use provided rate after discount for seeding price
+    price: Math.round(set.rateAfterDiscount),
+    countInStock: set.countInStock,
+    category: set.category,
+    image: set.image,
+    images: set.images,
+    items: set.items
+  }));
 }
 
 async function seedProducts() {
   await connectDB();
   const admin = await getAdminUser();
-  const products = getAllProductImages();
+  const products = getProductSets();
+  
   // Remove all kosha products first
   await Product.deleteMany({ category: 'kosha' });
-  // Add user field
-  const productsWithUser = products.map(p => ({ ...p, user: admin._id }));
+  
+  // Add user field and log pricing details
+  const productsWithUser = products.map(p => {
+    console.log(`${p.name}:`);
+    console.log(`  Seed Price (after 10% discount): ₹${p.price}`);
+    console.log(`  Stock: ${p.countInStock}`);
+    console.log(`  Items: ${p.items}`);
+    console.log('');
+    return { ...p, user: admin._id };
+  });
+  
   await Product.insertMany(productsWithUser);
-  console.log(`Seeded ${productsWithUser.length} Kosha products.`);
+  console.log(`Seeded ${productsWithUser.length} Kosha product sets.`);
   process.exit();
 }
 

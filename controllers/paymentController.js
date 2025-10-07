@@ -1,15 +1,136 @@
 import Payment from '../models/Payment.js';
 import Order from '../models/Order.js';
 import Guest from '../models/Guest.js';
+import Product from '../models/Product.js';
 import { 
   createRazorpayOrder, 
   verifyPaymentSignature, 
   createRefund, 
   getPaymentDetails 
 } from '../config/razorpay.js';
+import EmailService from '../config/email.js';
 import { validationResult } from 'express-validator';
 import mongoose from 'mongoose';
 import crypto from 'crypto';
+
+// Helper function to reduce inventory for paid orders
+const reduceInventoryForOrder = async (order, session) => {
+  try {
+    for (const item of order.items) {
+      const product = await Product.findById(item.product).session(session);
+      if (product) {
+        // Check if there's still enough stock (in case of race conditions)
+        if (product.countInStock >= item.quantity) {
+          // Use updateOne to avoid validation issues
+          await Product.updateOne(
+            { _id: item.product },
+            { $inc: { countInStock: -item.quantity } },
+            { session }
+          );
+          console.log(`Reduced inventory for product ${product.name}: ${item.quantity} units`);
+        } else {
+          console.warn(`Insufficient stock for product ${product.name} during payment processing`);
+          throw new Error(`Insufficient stock for product: ${product.name}`);
+        }
+      } else {
+        console.warn(`Product not found: ${item.product}`);
+        throw new Error(`Product not found: ${item.product}`);
+      }
+    }
+  } catch (error) {
+    console.error('Error reducing inventory:', error);
+    throw error;
+  }
+};
+
+// Helper function to restore inventory for refunded/cancelled orders
+const restoreInventoryForOrder = async (order, session) => {
+  try {
+    for (const item of order.items) {
+      const product = await Product.findById(item.product).session(session);
+      if (product) {
+        // Use updateOne to avoid validation issues
+        await Product.updateOne(
+          { _id: item.product },
+          { $inc: { countInStock: item.quantity } },
+          { session }
+        );
+        console.log(`Restored inventory for product ${product.name}: ${item.quantity} units`);
+      } else {
+        console.warn(`Product not found for restoration: ${item.product}`);
+      }
+    }
+  } catch (error) {
+    console.error('Error restoring inventory:', error);
+    throw error;
+  }
+};
+
+// Helper function to handle order cancellation with inventory restoration
+export const cancelOrderWithInventoryRestore = async (orderId, session) => {
+  try {
+    const order = await Order.findById(orderId).session(session);
+    if (!order) {
+      throw new Error('Order not found');
+    }
+
+    // Only restore inventory if the order was paid
+    if (order.paymentStatus === 'paid' && order.status === 'Paid') {
+      await restoreInventoryForOrder(order, session);
+    }
+
+    // Update order status
+    order.status = 'Cancelled';
+    await order.save({ session });
+
+    return order;
+  } catch (error) {
+    console.error('Error cancelling order:', error);
+    throw error;
+  }
+};
+
+// Helper function to send invoice email after successful payment
+const sendInvoiceEmailAfterPayment = async (order, payment) => {
+  try {
+    const emailService = new EmailService();
+    
+    // Prepare customer info based on order type
+    let customerInfo;
+    if (order.orderType === 'registered' && order.user) {
+      customerInfo = {
+        name: order.user.name,
+        email: order.user.email,
+        phone: order.user.phone || null
+      };
+    } else if (order.orderType === 'guest' && order.guestInfo) {
+      customerInfo = {
+        name: order.guestInfo.name,
+        email: order.guestInfo.email,
+        phone: order.guestInfo.phone
+      };
+    } else {
+      console.warn('Customer information not found for order:', order._id);
+      return;
+    }
+
+    // Prepare order and payment data
+    const orderData = { order, customerInfo };
+    const paymentData = { payment };
+
+    // Send invoice email
+    const result = await emailService.sendInvoice(orderData, paymentData);
+    
+    if (result.success) {
+      console.log('Invoice email sent successfully for order:', order.orderNumber);
+    } else {
+      console.error('Failed to send invoice email for order:', order.orderNumber, result.error);
+    }
+  } catch (error) {
+    console.error('Error sending invoice email:', error);
+    // Don't throw error to avoid breaking payment flow
+  }
+};
 
 // Create a new payment order
 export const createPaymentOrder = async (req, res) => {
@@ -168,13 +289,11 @@ export const verifyPayment = async (req, res) => {
     // Find the payment record
     let payment;
     if (isGuestPayment) {
-      // For guest payments, find by razorpay order ID and guest info
+      // For guest payments, match nested guestInfo fields using dot-notation
       payment = await Payment.findOne({ 
         razorpayOrderId: razorpayOrderId,
-        guestInfo: {
-          email: guestInfo.email,
-          phone: guestInfo.phone
-        }
+        'guestInfo.email': guestInfo.email,
+        'guestInfo.phone': guestInfo.phone
       }).session(session);
     } else {
       // For registered user payments
@@ -219,16 +338,29 @@ export const verifyPayment = async (req, res) => {
 
     await payment.save({ session });
 
-    // Update order status
+    // Update order status and reduce inventory
     const order = await Order.findById(payment.order).session(session);
     if (order) {
       order.status = 'Paid';
       order.paymentStatus = 'paid';
       order.paymentId = payment._id;
       await order.save({ session });
+      
+      // Reduce inventory only after successful payment
+      await reduceInventoryForOrder(order, session);
     }
 
     await session.commitTransaction();
+
+    // Send invoice email after successful payment (outside transaction)
+    if (order) {
+      // Populate order data for email
+      const populatedOrder = await Order.findById(order._id)
+        .populate('user', 'name email phone')
+        .populate('guest', 'name email phone');
+      
+      await sendInvoiceEmailAfterPayment(populatedOrder, payment);
+    }
 
     res.status(200).json({
       message: 'Payment verified successfully',
@@ -380,6 +512,9 @@ export const createRefundPayment = async (req, res) => {
         order.status = 'Refunded';
         order.paymentStatus = 'refunded';
         await order.save({ session });
+        
+        // Restore inventory for full refunds
+        await restoreInventoryForOrder(order, session);
       }
     }
 
@@ -528,11 +663,25 @@ const handlePaymentCaptured = async (paymentEntity) => {
         order.paymentStatus = 'paid';
         order.paymentId = payment._id;
         await order.save({ session });
+        
+        // Reduce inventory only after successful payment
+        await reduceInventoryForOrder(order, session);
       }
     }
 
     await session.commitTransaction();
     console.log('Payment captured webhook processed successfully:', order_id);
+
+    // Send invoice email after successful payment (outside transaction)
+    if (payment.status === 'paid') {
+      const order = await Order.findById(payment.order)
+        .populate('user', 'name email phone')
+        .populate('guest', 'name email phone');
+      
+      if (order) {
+        await sendInvoiceEmailAfterPayment(order, payment);
+      }
+    }
   } catch (error) {
     await session.abortTransaction();
     console.error('Error processing payment captured webhook:', error);
@@ -573,11 +722,25 @@ const handleOrderPaid = async (orderEntity) => {
         order.paymentStatus = 'paid';
         order.paymentId = payment._id;
         await order.save({ session });
+        
+        // Reduce inventory only after successful payment
+        await reduceInventoryForOrder(order, session);
       }
     }
 
     await session.commitTransaction();
     console.log('Order paid webhook processed successfully:', razorpayOrderId);
+
+    // Send invoice email after successful payment (outside transaction)
+    if (status === 'paid' && payment.status === 'paid') {
+      const order = await Order.findById(payment.order)
+        .populate('user', 'name email phone')
+        .populate('guest', 'name email phone');
+      
+      if (order) {
+        await sendInvoiceEmailAfterPayment(order, payment);
+      }
+    }
   } catch (error) {
     await session.abortTransaction();
     console.error('Error processing order paid webhook:', error);
@@ -618,6 +781,9 @@ const handlePaymentFailed = async (paymentEntity) => {
       order.status = 'Payment Failed';
       order.paymentStatus = 'failed';
       await order.save({ session });
+      
+      // Note: No inventory restoration needed here since inventory was never reduced
+      // for unpaid orders
     }
 
     await session.commitTransaction();

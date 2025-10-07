@@ -70,8 +70,8 @@ const orderSchema = new mongoose.Schema({
   },
   orderType: {
     type: String,
-    enum: ["registered", "guest"],
-    default: "registered"
+    enum: ['registered', 'guest'],
+    required: true
   },
   deliveredAt: {
     type: Date
