@@ -23,10 +23,25 @@ export const sendInvoiceEmail = async (req, res) => {
       return res.status(404).json({ message: 'Order not found' });
     }
 
-    // Find payment record
+    // Find payment record (optional for retail POS/offline payments)
     const payment = await Payment.findById(order.paymentId);
-    if (!payment) {
-      return res.status(404).json({ message: 'Payment record not found' });
+
+    // For retail POS/offline payments, payment record might not exist
+    // We'll create a minimal payment data object for the email
+    let paymentData;
+    if (payment) {
+      paymentData = { payment };
+    } else {
+      // Create minimal payment data for offline payments
+      paymentData = {
+        payment: {
+          amount: order.totalPrice,
+          currency: 'INR',
+          status: 'completed',
+          paymentMethod: order.paymentMethod || 'cash',
+          createdAt: order.createdAt
+        }
+      };
     }
 
     // Prepare customer info based on order type
@@ -47,12 +62,18 @@ export const sendInvoiceEmail = async (req, res) => {
       return res.status(400).json({ message: 'Customer information not found' });
     }
 
+    // Check if this is a retail POS order (offline sale)
+    const isRetailPOS = order.shippingAddress &&
+      (order.shippingAddress.address1 === 'Retail POS Sale' ||
+       order.shippingAddress.city === 'Retail');
+
     // Prepare order and payment data
     const orderData = { order, customerInfo };
-    const paymentData = { payment };
 
-    // Send invoice email
-    const result = await emailService.sendInvoice(orderData, paymentData);
+    // Send invoice email using appropriate template
+    const result = isRetailPOS
+      ? await emailService.sendRetailInvoice(orderData, paymentData)
+      : await emailService.sendInvoice(orderData, paymentData);
 
     if (result.success) {
       res.status(200).json({
