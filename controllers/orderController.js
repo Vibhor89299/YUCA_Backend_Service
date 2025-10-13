@@ -293,3 +293,127 @@ export const getGuestOrder = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+
+//Create Retail Order for POS Checkout
+export const createRetailOrder = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const { 
+      items, 
+      paymentMethod, 
+      retailCustomerInfo,
+      totalPrice 
+    } = req.body;
+
+    // Admin authentication check
+    if (!req.user || !req.user.role === 'ADMIN') {
+      console.debug('User role:', req.user.role);
+      await session.abortTransaction();
+      return res.status(403).json({ message: 'Admin access required for retail checkout' });
+    }
+
+    // Validate products and check stock availability
+    let orderItems = [];
+    let calculatedTotal = 0;
+
+    for (const item of items) {
+      const product = await Product.findById(item.productId).session(session);
+      
+      if (!product) {
+        await session.abortTransaction();
+        return res.status(404).json({ message: `Product ${item.productId} not found` });
+      }
+
+      if (product.countInStock < item.quantity) {
+        await session.abortTransaction();
+        return res.status(400).json({ 
+          message: `Insufficient stock for product: ${product.name}`,
+          productId: product._id,
+          available: product.countInStock,
+          requested: item.quantity
+        });
+      }
+
+      // IMPORTANT: Reduce inventory immediately for retail orders
+      product.countInStock -= item.quantity;
+      await product.save({ session });
+
+      // Add to order items
+      orderItems.push({
+        product: product._id,
+        name: product.name,
+        quantity: item.quantity,
+        price: product.price,
+        image: product.image
+      });
+
+      // Calculate total price
+      calculatedTotal += product.price * item.quantity;
+    }
+
+    // Validate total price if provided
+    if (totalPrice && Math.abs(calculatedTotal - totalPrice) > 0.01) {
+      await session.abortTransaction();
+      return res.status(400).json({ 
+        message: 'Total price mismatch',
+        calculated: calculatedTotal,
+        provided: totalPrice
+      });
+    }
+
+    // Generate unique order identifiers
+    const orderNumber = await generateOrderNumber();
+    const orderUUID = generateOrderUUID();
+
+    // Create retail order
+    const orderData = {
+      orderNumber,
+      orderUUID,
+      items: orderItems,
+      totalPrice: calculatedTotal,
+      status: 'Paid', // Retail orders are immediately paid
+      paymentStatus: 'paid',
+      paymentMethod: paymentMethod || 'cash',
+      isRetailOrder: true,
+      orderType: 'retail',
+      retailCustomerInfo: retailCustomerInfo || null
+    };
+
+    const order = new Order(orderData);
+    await order.save({ session });
+    
+    await session.commitTransaction();
+    
+    res.status(201).json({
+      message: 'Retail order created successfully',
+      order: {
+        id: order._id,
+        orderNumber: order.orderNumber,
+        orderUUID: order.orderUUID,
+        items: order.items,
+        totalPrice: order.totalPrice,
+        status: order.status,
+        paymentStatus: order.paymentStatus,
+        paymentMethod: order.paymentMethod,
+        isRetailOrder: order.isRetailOrder,
+        orderType: order.orderType,
+        retailCustomerInfo: order.retailCustomerInfo,
+        createdAt: order.createdAt
+      }
+    });
+
+  } catch (error) {
+    await session.abortTransaction();
+    console.error('Error creating retail order:', error);
+    res.status(500).json({ message: 'Error creating retail order', error: error.message });
+  } finally {
+    session.endSession();
+  }
+};

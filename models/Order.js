@@ -49,6 +49,17 @@ const orderSchema = new mongoose.Schema({
     name: String,
     phone: String
   },
+  //Retail order specific fields
+  isRetailOrder: {
+    type: Boolean,
+    default: false
+  },
+  retailCustomerInfo:{
+    name: String,
+    email: String,
+    phone: String,
+  },
+
   totalPrice: Number,
   status: { 
     type: String, 
@@ -62,16 +73,18 @@ const orderSchema = new mongoose.Schema({
   },
   paymentMethod: {
     type: String,
-    default: "razorpay"
+    default: "cash", // Default to cash for retail orders
+    enum: ["cash", "card", "upi", "razorpay"]
   },
   paymentId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Payment"
   },
-  orderType: {
+   orderType: {
     type: String,
-    enum: ['registered', 'guest'],
-    required: true
+    enum: ['registered', 'guest', 'retail'],
+    required: true,
+    default: 'registered'
   },
   deliveredAt: {
     type: Date
@@ -93,6 +106,7 @@ orderSchema.index({ user: 1 });
 orderSchema.index({ guest: 1 });
 orderSchema.index({ status: 1 });
 orderSchema.index({ orderType: 1 });
+orderSchema.index({ isRetailOrder: 1 });
 orderSchema.index({ createdAt: -1 });
 orderSchema.index({ orderUUID: 1 });
 orderSchema.index({ orderNumber: 1 });

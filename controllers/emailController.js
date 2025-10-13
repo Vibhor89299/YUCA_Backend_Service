@@ -58,14 +58,28 @@ export const sendInvoiceEmail = async (req, res) => {
         email: order.guestInfo.email,
         phone: order.guestInfo.phone
       };
-    } else {
+    }else if(order.orderType === 'retail' && order.retailCustomerInfo){ 
+      customerInfo = {
+        name: order.retailCustomerInfo.name,
+        email: order.retailCustomerInfo.email,
+        phone: order.retailCustomerInfo.phone
+      };
+    } 
+    else {
       return res.status(400).json({ message: 'Customer information not found' });
     }
 
     // Check if this is a retail POS order (offline sale)
-    const isRetailPOS = order.shippingAddress &&
-      (order.shippingAddress.address1 === 'Retail POS Sale' ||
-       order.shippingAddress.city === 'Retail');
+    const isRetailPOS = order.isRetailOrder === true || 
+      (order.shippingAddress && 
+       (order.shippingAddress.address1 === 'Retail POS Sale' ||
+        order.shippingAddress.city === 'Retail'));
+
+    // Ensure retail orders are treated as paid
+    if (isRetailPOS) {
+      order.status = 'Paid';
+      order.paymentStatus = 'paid';
+    }
 
     // Prepare order and payment data
     const orderData = { order, customerInfo };

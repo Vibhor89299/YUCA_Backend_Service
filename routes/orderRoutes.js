@@ -5,7 +5,7 @@ import { protect, adminOnly } from "../middlewares/authMiddleware.js";
 import Order from "../models/Order.js";
 import mongoose from 'mongoose';
 import { isValidOrderNumber } from '../utils/orderIdGenerator.js';
-
+import { createRetailOrder } from '../controllers/orderController.js';
 const router = express.Router();
 
 // @route   POST /api/orders
@@ -182,5 +182,29 @@ router.put("/:id", protect, adminOnly, async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
+
+// NEW: Retail POS checkout route
+// @route   POST /api/orders/retail
+// @desc    Create retail order (Admin only)
+// @access  Private/Admin
+router.post(
+  "/retail",
+  protect,
+  adminOnly, // Only admins can create retail orders
+  [
+    body('items', 'Order items are required').isArray({ min: 1 }),
+    body('items.*.productId', 'Product ID is required').notEmpty(),
+    body('items.*.quantity', 'Quantity must be at least 1').isInt({ min: 1 }),
+    body('paymentMethod', 'Payment method is required').notEmpty(),
+    // Retail customer info (optional)
+    body('retailCustomerInfo.name').optional().trim().isLength({ min: 2, max: 50 }),
+    body('retailCustomerInfo.email').optional().isEmail().normalizeEmail(),
+    body('retailCustomerInfo.phone').optional().isMobilePhone('en-IN'),
+    body('retailCustomerInfo.address').optional().trim(),
+    // Total price validation
+    body('totalPrice').optional().isNumeric()
+  ],
+  createRetailOrder
+);
 
 export default router;
