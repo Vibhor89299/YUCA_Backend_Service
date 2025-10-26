@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import helmet from "helmet";
 import cors from "cors";
 import morgan from "morgan";
+import cookieParser from "cookie-parser";
 import path from 'path';
 import { fileURLToPath } from 'url';
 import connectDB from "./config/db.js";
@@ -14,6 +15,7 @@ import productRoutes from "./routes/productRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
 import guestRoutes from "./routes/guestRoutes.js";
 import emailRoutes from "./routes/emailRoutes.js";
+import analyticsRoutes from "./routes/analyticsRoutes.js";
 import { notFound, errorHandler } from './middleware/errorMiddleware.js';
 
 // Load environment variables
@@ -40,6 +42,9 @@ if (process.env.NODE_ENV === 'development') {
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 
+// Cookie parser
+app.use(cookieParser());
+
 // Serving static files
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -60,6 +65,7 @@ app.use("/api/products", productRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/guests", guestRoutes);
 app.use("/api/email", emailRoutes);
+app.use("/api/analytics", analyticsRoutes);
 
 // Handle 404 - Not Found
 app.use(notFound);
