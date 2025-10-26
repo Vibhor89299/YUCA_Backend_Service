@@ -53,7 +53,8 @@ export const getProducts = async (req, res) => {
     if (req.query.sortBy) {
       sortOptions[req.query.sortBy] = req.query.sortOrder === 'desc' ? -1 : 1;
     } else {
-      sortOptions.createdAt = -1; // Default sort by newest
+      sortOptions.displayOrder = 1; // Default sort by display order (ascending)
+      sortOptions.createdAt = -1; // Secondary sort by newest
     }
 
     const products = await Product.find(query)
@@ -99,7 +100,8 @@ export const getProduct = async (req, res) => {
 // @access  Public
 export const getProductsByCategory = async (req, res) => {
   try {
-    const products = await Product.find({ category: req.params.category });
+    const products = await Product.find({ category: req.params.category })
+      .sort({ displayOrder: 1, createdAt: -1 });
     res.json(products);
   } catch (error) {
     res.status(500).json({ message: error.message });

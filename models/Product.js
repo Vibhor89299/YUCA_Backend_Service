@@ -57,6 +57,11 @@ const productSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true
+    },
+    displayOrder: {
+      type: Number,
+      default: 0,
+      index: true
     }
   },
   {
