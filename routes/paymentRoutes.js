@@ -6,6 +6,7 @@ import {
   verifyPayment,
   getPayment,
   getUserPayments,
+  getAllPayments,
   createRefundPayment,
   getPaymentStatus,
   handleWebhook
@@ -62,6 +63,17 @@ router.post(
     next();
   },
   verifyPayment
+);
+
+// @desc    Get all payments (Admin only)
+// @route   GET /api/payments/all
+// @access  Private/Admin
+router.get(
+  '/all',
+  protect,
+  adminOnly,
+  validatePagination,
+  getAllPayments
 );
 
 // @desc    Get payment details by ID

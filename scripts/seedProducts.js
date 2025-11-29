@@ -459,7 +459,7 @@ const PRODUCT_SETS = [
     category: 'kosha',
     image: '/assets/kosha/geobowl/0.png',
     images: [
-      '/assets/kosha/GEO-BOWL/geo-bowl/1.png',
+      // '/assets/kosha/GEO-BOWL/geo-bowl/1.png',
       '/assets/kosha/GEO-BOWL/geo-bowl/2.png',
       '/assets/kosha/GEO-BOWL/geo-bowl/3.png'
     ]
@@ -483,7 +483,7 @@ const PRODUCT_SETS = [
     ]
   },
   {
-    name: 'Varnikaparta',
+    name: 'Varnikapatra',
     description: 'Classic enamel bowl paired with coconut wood cutlery. A timeless combination of durability and functionality for everyday use.',
     items: '1 enamel bowl + 1 set coconut wood cutlery',
     countInStock: 4,
@@ -548,9 +548,9 @@ const PRODUCT_SETS = [
     manufactureCost: 280,
     packagingCost: 35,
     profitMultiplier: 2,
-    finalRate: 551.25,
+    finalRate: 625,
     discountPercent: 0,
-    rateAfterDiscount: 551.25,
+    rateAfterDiscount: 625,
     gstPercentage: 5,
     category: 'kosha',
     image: '/assets/kosha/COCONUT WATER/coconut-water/twoset/0.png',
@@ -559,7 +559,7 @@ const PRODUCT_SETS = [
     ]
   },
   {
-    name: 'Jalapatram Quad Set',
+    name: 'Jala Patram Quad Set',
     description: 'Set of 4 natural coconut water glasses, perfect for serving refreshing beverages to guests.',
     items: '4 coconut water glasses',
     countInStock: 1,
@@ -672,7 +672,7 @@ const PRODUCT_SETS = [
     ]
   },
   {
-    name: 'Sugandha Dhara Tray',
+    name: 'Sugandhadhara Tray',
     description: 'Elegant soap tray for your bathroom, keeping your soap dry and your counter clean.',
     items: '1 soap tray',
     countInStock: 3,
@@ -692,7 +692,7 @@ const PRODUCT_SETS = [
     ]
   },
   {
-    name: 'Sugandha Dhara Tray Duo Set',
+    name: 'Sugandhadhara Tray Set',
     description: 'Set of 2 elegant soap trays, perfect for organizing multiple soaps in your bathroom.',
     items: '2 soap trays',
     countInStock: 2,
@@ -712,10 +712,10 @@ const PRODUCT_SETS = [
     ]
   },
   {
-    name: 'Śāntidīpa',
+    name: 'Santidīpa',
     description: 'Elegant lid container candle, perfect for creating a serene and peaceful ambiance with its soft glow.',
     items: '1 lid container candle',
-    countInStock: 0,
+    countInStock: 2,
     manufactureCost: 300,
     packagingCost: 35,
     profitMultiplier: 2,

@@ -1,11 +1,15 @@
 import express from "express";
 import { body } from 'express-validator';
-import { createOrder, getOrder, getGuestOrder } from "../controllers/orderController.js";
+import {
+  createOrder,
+  getOrder,
+  getGuestOrder,
+  createRetailOrder
+} from "../controllers/orderController.js";
 import { protect, adminOnly } from "../middlewares/authMiddleware.js";
 import Order from "../models/Order.js";
 import mongoose from 'mongoose';
 import { isValidOrderNumber } from '../utils/orderIdGenerator.js';
-import { createRetailOrder } from '../controllers/orderController.js';
 const router = express.Router();
 
 // @route   POST /api/orders
@@ -118,6 +122,8 @@ router.get("/", protect, adminOnly, async (req, res) => {
       items: order.items,
       shippingAddress: order.shippingAddress,
       guestInfo: order.guestInfo,
+      retailCustomerInfo: order.retailCustomerInfo,
+      isRetailOrder: order.isRetailOrder,
       totalPrice: order.totalPrice,
       status: order.status,
       paymentStatus: order.paymentStatus,
@@ -206,5 +212,48 @@ router.post(
   ],
   createRetailOrder
 );
+
+// @route   DELETE /api/orders/:id
+// @desc    Delete order (Admin only)
+// @access  Private/Admin
+router.delete("/:id", protect, adminOnly, async (req, res) => {
+  try {
+    const { id } = req.params;
+    let order;
+
+    // Find order by different ID types
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      order = await Order.findById(id);
+    } else if (isValidOrderNumber(id)) {
+      order = await Order.findOne({ orderNumber: id });
+    } else if (id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i)) {
+      order = await Order.findOne({ orderUUID: id });
+    } else {
+      return res.status(400).json({ message: 'Invalid order ID format' });
+    }
+
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    // Prevent deletion of paid orders (optional safety check)
+    if (order.paymentStatus === 'paid' && order.status !== 'Cancelled') {
+      return res.status(400).json({
+        message: 'Cannot delete a paid order. Cancel it first.'
+      });
+    }
+
+    await order.deleteOne();
+
+    res.json({
+      success: true,
+      message: 'Order deleted successfully',
+      deletedOrderId: id
+    });
+  } catch (error) {
+    console.error('Error deleting order:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
 export default router;

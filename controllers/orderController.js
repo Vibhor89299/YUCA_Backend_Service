@@ -198,6 +198,8 @@ export const getOrder = async (req, res) => {
         items: order.items,
         shippingAddress: order.shippingAddress,
         guestInfo: order.guestInfo,
+        retailCustomerInfo: order.retailCustomerInfo,
+        isRetailOrder: order.isRetailOrder,
         totalPrice: order.totalPrice,
         status: order.status,
         paymentStatus: order.paymentStatus,
@@ -295,6 +297,23 @@ export const getGuestOrder = async (req, res) => {
 };
 
 //Create Retail Order for POS Checkout
+// @desc    Get all orders
+// @route   GET /api/orders
+// @access  Private/Admin
+export const getOrders = async (req, res) => {
+  try {
+    const orders = await Order.find({})
+      .populate('user', 'name email')
+      .populate('items.product', 'name price image')
+      .sort({ createdAt: -1 });
+
+    res.json(orders);
+  } catch (error) {
+    console.error('Error fetching orders:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 export const createRetailOrder = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {

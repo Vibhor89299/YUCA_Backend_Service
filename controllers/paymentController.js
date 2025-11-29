@@ -447,6 +447,83 @@ export const getUserPayments = async (req, res) => {
   }
 };
 
+// Get all payments (Admin only)
+export const getAllPayments = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+    const status = req.query.status; // Optional filter by status
+
+    // Build query
+    const query = {};
+    if (status && ['created', 'attempted', 'paid', 'failed', 'cancelled', 'refunded'].includes(status)) {
+      query.status = status;
+    }
+
+    const [payments, total] = await Promise.all([
+      Payment.find(query)
+        .populate('order', 'orderNumber orderUUID totalPrice status')
+        .populate('user', 'name email')
+        .populate('guest', 'guestId email name')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      Payment.countDocuments(query)
+    ]);
+
+    // Format payments for response
+    const formattedPayments = payments.map(payment => ({
+      id: payment._id,
+      razorpayOrderId: payment.razorpayOrderId,
+      razorpayPaymentId: payment.razorpayPaymentId,
+      amount: payment.amount, // Already stored in rupees from order.totalPrice
+      currency: payment.currency,
+      status: payment.status,
+      paymentMethod: payment.paymentMethod,
+      order: payment.order ? {
+        id: payment.order._id,
+        orderNumber: payment.order.orderNumber,
+        orderUUID: payment.order.orderUUID,
+        totalPrice: payment.order.totalPrice,
+        status: payment.order.status
+      } : null,
+      customer: payment.user ? {
+        id: payment.user._id,
+        name: payment.user.name,
+        email: payment.user.email,
+        type: 'registered'
+      } : payment.guest ? {
+        id: payment.guest._id,
+        name: payment.guest.name,
+        email: payment.guest.email,
+        type: 'guest'
+      } : payment.guestInfo ? {
+        name: payment.guestInfo.name,
+        email: payment.guestInfo.email,
+        type: 'guest'
+      } : null,
+      refunds: payment.refunds || [],
+      createdAt: payment.createdAt,
+      updatedAt: payment.updatedAt
+    }));
+
+    res.json({
+      success: true,
+      payments: formattedPayments,
+      pagination: {
+        page,
+        limit,
+        pages: Math.ceil(total / limit),
+        total
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching all payments:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 // Create refund
 export const createRefundPayment = async (req, res) => {
   const errors = validationResult(req);

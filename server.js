@@ -16,7 +16,9 @@ import paymentRoutes from "./routes/paymentRoutes.js";
 import guestRoutes from "./routes/guestRoutes.js";
 import emailRoutes from "./routes/emailRoutes.js";
 import analyticsRoutes from "./routes/analyticsRoutes.js";
+import uploadRoutes from "./routes/uploadRoutes.js";
 import { notFound, errorHandler } from './middleware/errorMiddleware.js';
+import { verifyCloudinaryConfig } from './config/cloudinary.js';
 
 // Load environment variables
 dotenv.config();
@@ -24,14 +26,34 @@ dotenv.config();
 // Connect to MongoDB
 connectDB();
 
+// Verify Cloudinary configuration
+verifyCloudinaryConfig();
+
 // Initialize express
 const app = express();
 
 // Set security HTTP headers
 app.use(helmet());
 
-// Enable CORS
-app.use(cors());
+// Enable CORS with specific options
+const corsOptions = {
+  origin: [
+    'http://localhost:5173', // Vite dev server
+    'http://127.0.0.1:5173', // Alternative localhost
+    'http://localhost:3000', // Common React dev port
+    'http://127.0.0.1:3000', // Alternative React dev port
+  ],
+  credentials: true, // Allow cookies to be sent with requests
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  exposedHeaders: ['set-cookie']
+};
+
+// Apply CORS with the specified options
+app.use(cors(corsOptions));
+
+// Handle preflight requests
+app.options('*', cors(corsOptions));
 
 // Development logging
 if (process.env.NODE_ENV === 'development') {
@@ -66,6 +88,7 @@ app.use("/api/payments", paymentRoutes);
 app.use("/api/guests", guestRoutes);
 app.use("/api/email", emailRoutes);
 app.use("/api/analytics", analyticsRoutes);
+app.use("/api/upload", uploadRoutes);
 
 // Handle 404 - Not Found
 app.use(notFound);

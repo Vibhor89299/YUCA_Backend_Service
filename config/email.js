@@ -920,6 +920,16 @@ export class EmailService {
     );
   }
 
+  async sendInvoice(orderData, paymentData) {
+    const template = emailTemplates.invoice(orderData, paymentData);
+    return await this.sendEmail(
+      orderData.customerInfo.email,
+      template.subject,
+      template.html,
+      template.text
+    );
+  }
+
   async sendOrderConfirmation(orderData) {
     const template = emailTemplates.orderConfirmation(orderData);
     return await this.sendEmail(
