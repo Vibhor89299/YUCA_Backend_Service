@@ -35,16 +35,36 @@ const app = express();
 // Set security HTTP headers
 app.use(helmet());
 
-// Enable CORS with specific options
+// Enable CORS with dynamic origin
+const allowedOrigins = [
+  'http://localhost:5173', // Vite dev server
+  'http://127.0.0.1:5173', // Alternative localhost
+  'http://localhost:3000', // Common React dev port
+  'http://127.0.0.1:3000', // Alternative React dev port
+  'https://yucalifestyle.com', // Production domain
+  'https://www.yucalifestyle.com', // Production domain with www
+];
+
 const corsOptions = {
-  origin: [
-    'http://localhost:5173', // Vite dev server
-    'http://127.0.0.1:5173', // Alternative localhost
-    'http://localhost:3000', // Common React dev port
-    'http://127.0.0.1:3000', // Alternative React dev port
-    'https://yucalifestyle.com', // Production domain
-    'https://www.yucalifestyle.com', // Production domain with www
-  ],
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    // Check if origin is in the static allowed list
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    // Allow origins containing 'yuca-admin-pages' or 'yuca-frontend-pages'
+    if (origin.includes('yuca-admin-pages') || origin.includes('yuca-frontend-pages')) {
+      return callback(null, true);
+    }
+
+    // Reject all other origins
+    callback(new Error('Not allowed by CORS'));
+  },
   credentials: true, // Allow cookies to be sent with requests
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
