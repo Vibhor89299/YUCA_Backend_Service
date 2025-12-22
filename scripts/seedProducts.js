@@ -13,7 +13,7 @@ const KOSHA_ASSETS_PATH = path.resolve('..', 'frontend', 'public', 'assets', 'ko
 // Product Sets Configuration (seeded for local development)
 // Notes:
 // - category must be 'kosha' to satisfy the Product model enum
-// - price is set to the discounted retail rate (10% off the final rate)
+// - price is the selling price, mrp is the maximum retail price
 // - countInStock uses provided live quantity values
 
 // const PRODUCT_SETS = 
@@ -452,9 +452,9 @@ const PRODUCT_SETS = [
     manufactureCost: 340,
     packagingCost: 35,
     profitMultiplier: 2,
-    finalRate: 813.75,
+    finalRate: 1200,
     discountPercent: 0,
-    rateAfterDiscount: 813.75,
+    rateAfterDiscount: 1099,
     gstPercentage: 5,
     category: 'kosha',
     image: '/assets/kosha/geobowl/0.png',
@@ -472,9 +472,9 @@ const PRODUCT_SETS = [
     manufactureCost: 320,
     packagingCost: 35,
     profitMultiplier: 2,
-    finalRate: 787.50,
+    finalRate: 1100,
     discountPercent: 0,
-    rateAfterDiscount: 787.50,
+    rateAfterDiscount: 999,
     gstPercentage: 5,
     category: 'kosha',
     image: '/assets/kosha/jumbobowl/0.png',
@@ -490,9 +490,9 @@ const PRODUCT_SETS = [
     manufactureCost: 425,
     packagingCost: 35,
     profitMultiplier: 2,
-    finalRate: 761.25,
+    finalRate: 1050,
     discountPercent: 0,
-    rateAfterDiscount: 761.25,
+    rateAfterDiscount: 849,
     gstPercentage: 5,
     category: 'kosha',
     image: '/assets/kosha/enamelbowl-wood-cut/0.png',
@@ -510,9 +510,9 @@ const PRODUCT_SETS = [
     manufactureCost: 285,
     packagingCost: 35,
     profitMultiplier: 2,
-    finalRate: 603.75,
+    finalRate: 800,
     discountPercent: 0,
-    rateAfterDiscount: 603.75,
+    rateAfterDiscount: 699,
     gstPercentage: 5,
     category: 'kosha',
     image: '/assets/kosha/midbowl-coco-wood-cut/0.png',
@@ -548,9 +548,9 @@ const PRODUCT_SETS = [
     manufactureCost: 280,
     packagingCost: 35,
     profitMultiplier: 2,
-    finalRate: 625,
+    finalRate: 999,
     discountPercent: 0,
-    rateAfterDiscount: 625,
+    rateAfterDiscount: 699,
     gstPercentage: 5,
     category: 'kosha',
     image: '/assets/kosha/COCONUT WATER/coconut-water/twoset/0.png',
@@ -558,24 +558,24 @@ const PRODUCT_SETS = [
       '/assets/kosha/COCONUT WATER/coconut-water/twoset/1.png',
     ]
   },
-  {
-    name: 'Jala Patram Quad Set',
-    description: 'Set of 4 natural coconut water glasses, perfect for serving refreshing beverages to guests.',
-    items: '4 coconut water glasses',
-    countInStock: 1,
-    manufactureCost: 530,
-    packagingCost: 35,
-    profitMultiplier: 2,
-    finalRate: 1181.25,
-    discountPercent: 0,
-    rateAfterDiscount: 1181.25,
-    gstPercentage: 5,
-    category: 'kosha',
-    image: '/assets/kosha/COCONUT WATER/coconut-water/fourset/0.png',
-    images: [
-      '/assets/kosha/COCONUT WATER/coconut-water/fourset/1.png',
-    ]
-  },
+  // {
+  //   name: 'Jala Patram Quad Set',
+  //   description: 'Set of 4 natural coconut water glasses, perfect for serving refreshing beverages to guests.',
+  //   items: '4 coconut water glasses',
+  //   countInStock: 1,
+  //   manufactureCost: 530,
+  //   packagingCost: 35,
+  //   profitMultiplier: 2,
+  //   finalRate: 1280,
+  //   discountPercent: 0,
+  //   rateAfterDiscount: 1280,
+  //   gstPercentage: 5,
+  //   category: 'kosha',
+  //   image: '/assets/kosha/COCONUT WATER/coconut-water/fourset/0.png',
+  //   images: [
+  //     '/assets/kosha/COCONUT WATER/coconut-water/fourset/1.png',
+  //   ]
+  // },
   {
     name: 'Prakṛti Pātram',
     description: 'Elegant coconut tea cup, perfect for enjoying your favorite hot beverages.',
@@ -584,9 +584,9 @@ const PRODUCT_SETS = [
     manufactureCost: 230,
     packagingCost: 35,
     profitMultiplier: 2,
-    finalRate: 341.25,
+    finalRate: 540,
     discountPercent: 0,
-    rateAfterDiscount: 341.25,
+    rateAfterDiscount: 420,
     gstPercentage: 5,
     category: 'kosha',
     image: '/assets/kosha/TEA CUP/tea-cup/0.png',
@@ -603,9 +603,9 @@ const PRODUCT_SETS = [
     manufactureCost: 430,
     packagingCost: 35,
     profitMultiplier: 2,
-    finalRate: 656.25,
+    finalRate: 800,
     discountPercent: 0,
-    rateAfterDiscount: 656.25,
+    rateAfterDiscount: 699,
     gstPercentage: 5,
     category: 'kosha',
     image: '/assets/kosha/TEA CUP/tea-cup/twoset/0.png',
@@ -622,9 +622,9 @@ const PRODUCT_SETS = [
     manufactureCost: 830,
     packagingCost: 35,
     profitMultiplier: 2,
-    finalRate: 1286.25,
+    finalRate: 1400,
     discountPercent: 0,
-    rateAfterDiscount: 1286.25,
+    rateAfterDiscount: 1299,
     gstPercentage: 5,
     category: 'kosha',
     image: '/assets/kosha/TEA CUP/tea-cup/fourset/0.png',
@@ -641,9 +641,9 @@ const PRODUCT_SETS = [
     manufactureCost: 410,
     packagingCost: 35,
     profitMultiplier: 2,
-    finalRate: 813.75,
+    finalRate: 1199,
     discountPercent: 0,
-    rateAfterDiscount: 813.75,
+    rateAfterDiscount: 999,
     gstPercentage: 5,
     category: 'kosha',
     image: '/assets/kosha/WINE/wine/0.png',
@@ -660,9 +660,9 @@ const PRODUCT_SETS = [
     manufactureCost: 115,
     packagingCost: 35,
     profitMultiplier: 2,
-    finalRate: 288.75,
+    finalRate: 499,
     discountPercent: 0,
-    rateAfterDiscount: 288.75,
+    rateAfterDiscount: 299,
     gstPercentage: 5,
     category: 'kosha',
     image: '/assets/kosha/SERVING SPOON/1.png',
@@ -679,29 +679,9 @@ const PRODUCT_SETS = [
     manufactureCost: 145,
     packagingCost: 35,
     profitMultiplier: 2,
-    finalRate: 288.75,
+    finalRate: 600,
     discountPercent: 0,
-    rateAfterDiscount: 288.75,
-    gstPercentage: 5,
-    category: 'kosha',
-    image: '/assets/kosha/BATHROOM/soap-dish/0.png',
-    images: [
-      '/assets/kosha/BATHROOM/soap-dish/4.png',
-      '/assets/kosha/BATHROOM/soap-dish/2.png',
-      '/assets/kosha/BATHROOM/soap-dish/3.png',
-    ]
-  },
-  {
-    name: 'Sugandhadhara Tray Set',
-    description: 'Set of 2 elegant soap trays, perfect for organizing multiple soaps in your bathroom.',
-    items: '2 soap trays',
-    countInStock: 2,
-    manufactureCost: 260,
-    packagingCost: 35,
-    profitMultiplier: 2,
-    finalRate: 446.25,
-    discountPercent: 0,
-    rateAfterDiscount: 446.25,
+    rateAfterDiscount: 399,
     gstPercentage: 5,
     category: 'kosha',
     image: '/assets/kosha/BATHROOM/soap-dish/0.png',
@@ -719,9 +699,9 @@ const PRODUCT_SETS = [
     manufactureCost: 300,
     packagingCost: 35,
     profitMultiplier: 2,
-    finalRate: 735,
+    finalRate: 999,
     discountPercent: 0,
-    rateAfterDiscount: 735,
+    rateAfterDiscount: 849,
     gstPercentage: 5,
     category: 'kosha',
     image: '/assets/kosha/CANDLES/candles/1.png',
@@ -729,7 +709,27 @@ const PRODUCT_SETS = [
       '/assets/kosha/CANDLE/candles/1.png',
       '/assets/kosha/CANDLE/candles/2.png',
     ]
-  }
+  },
+  {
+    name: 'Madhuri',
+    description: 'Elegant small coco shell katori candle, perfect for creating a serene and peaceful ambiance with its soft glow.',
+    items: '1 small coco shell katori candle',
+    countInStock: 2,
+    manufactureCost: 300,
+    packagingCost: 35,
+    profitMultiplier: 2,
+    finalRate: 499,
+    discountPercent: 0,
+    rateAfterDiscount: 399,
+    gstPercentage: 5,
+    category: 'kosha',
+    image: '/assets/kosha/CANDLES/candles/1.png',
+    images: [
+      '/assets/kosha/CANDLE/candles/1.png',
+      '/assets/kosha/CANDLE/candles/2.png',
+    ]
+  },
+  
 ];
 
 // Calculate final price with GST
@@ -759,6 +759,7 @@ function getProductSets() {
     description: set.description,
     // Use provided rate after discount for seeding price
     price: Math.round(set.rateAfterDiscount),
+    mrp: Math.round(set.finalRate), // MRP for strikethrough display
     countInStock: set.countInStock,
     category: set.category,
     image: set.image,
@@ -779,7 +780,8 @@ async function seedProducts() {
   // Add user field and log pricing details
   const productsWithUser = products.map(p => {
     console.log(`${p.name}:`);
-    console.log(`  Seed Price (after 10% discount): ₹${p.price}`);
+    console.log(`  MRP: ₹${p.mrp}`);
+    console.log(`  Selling Price: ₹${p.price}`);
     console.log(`  Stock: ${p.countInStock}`);
     console.log(`  Items: ${p.items}`);
     console.log('');

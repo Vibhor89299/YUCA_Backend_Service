@@ -2,12 +2,37 @@ import Product from '../models/Product.js';
 import mongoose from 'mongoose';
 import User from '../models/User.js';
 
+// @desc    Get single product by ID
+// @route   GET /api/admin/products/:id
+// @access  Private/Admin
+export const getProductById = async (req, res) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ message: 'Invalid product ID' });
+    }
+
+    const product = await Product.findById(req.params.id);
+
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+
+    res.json(product);
+  } catch (error) {
+    console.error('Error fetching product:', error);
+    res.status(500).json({
+      message: 'Error fetching product',
+      error: error.message
+    });
+  }
+};
+
 // @desc    Create a new product
 // @route   POST /api/admin/products
 // @access  Private/Admin
 export const createProduct = async (req, res) => {
   try {
-    const { name, description, price, countInStock, image, category } = req.body;
+    const { name, description, price, countInStock, image, images, category } = req.body;
     const existingProduct = await Product.findOne({ name });
     if (existingProduct) {
       return res.status(400).json({
@@ -21,18 +46,19 @@ export const createProduct = async (req, res) => {
       price,
       countInStock: countInStock || 0,
       image: image || '/images/sample.jpg',
+      images: images || [],
       category,
       user: req.user._id
     });
-    
+
     const createdProduct = await product.save();
-    
+
     res.status(201).json(createdProduct);
   } catch (error) {
     console.error('Error creating product:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       message: 'Error creating product',
-      error: error.message 
+      error: error.message
     });
   }
 };
@@ -133,29 +159,31 @@ export const updateProduct = async (req, res) => {
       return res.status(400).json({ message: 'Invalid product ID' });
     }
 
-    const { name, description, price, image, category } = req.body;
-    
+    const { name, description, price, image, images, category, countInStock } = req.body;
+
     const product = await Product.findById(req.params.id);
-    
+
     if (!product) {
       return res.status(404).json({ message: 'Product not found' });
     }
-    
+
     // Update product fields
     product.name = name || product.name;
     product.description = description || product.description;
-    product.price = price || product.price;
+    product.price = price ?? product.price;
     product.image = image || product.image;
+    product.images = images || product.images;
     product.category = category || product.category;
-    
+    product.countInStock = countInStock ?? product.countInStock;
+
     const updatedProduct = await product.save();
-    
+
     res.json(updatedProduct);
   } catch (error) {
     console.error('Error updating product:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       message: 'Error updating product',
-      error: error.message 
+      error: error.message
     });
   }
 };

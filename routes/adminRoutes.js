@@ -1,12 +1,13 @@
 import express from "express";
 import { protect, adminOnly } from "../middlewares/authMiddleware.js";
-import { 
+import {
   createProduct,
   createProductsBulk,
-  updateProduct, 
-  deleteProduct, 
+  updateProduct,
+  deleteProduct,
   updateInventory,
   getProductsAdmin,
+  getProductById,
   deleteUser,
   updateRole
 } from "../controllers/adminController.js";
@@ -59,6 +60,11 @@ router.delete("/users/:userId/",
 // @route   GET /api/admin/products
 // @access  Private/Admin
 router.get("/products", protect, adminOnly, getProductsAdmin);
+
+// @desc    Get single product by ID
+// @route   GET /api/admin/products/:id
+// @access  Private/Admin
+router.get("/products/:id", protect, adminOnly, getProductById);
 
 // @desc    Update a product
 // @route   PUT /api/admin/products/:id

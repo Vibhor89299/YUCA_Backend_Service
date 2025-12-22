@@ -57,8 +57,8 @@ const corsOptions = {
       return callback(null, true);
     }
 
-    // Allow origins containing 'yuca-admin-pages' or 'yuca-frontend-pages'
-    if (origin.includes('yuca-admin-pages') || origin.includes('yuca-frontend-pages')) {
+    // Allow origins containing Cloudflare Pages deployments
+    if (origin.includes('yuca-admin.pages.dev') || origin.includes('yuca-frontend.pages.dev')) {
       return callback(null, true);
     }
 
