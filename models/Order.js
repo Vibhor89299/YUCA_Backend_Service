@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import crypto from "crypto";
 
 const orderSchema = new mongoose.Schema({
   // UUID for better ID management and relations
@@ -49,6 +50,11 @@ const orderSchema = new mongoose.Schema({
     name: String,
     phone: String
   },
+  // Secure token for guest checkout authorization
+  guestCheckoutToken: {
+    type: String,
+    select: false // Not returned in queries by default
+  },
   //Retail order specific fields
   isRetailOrder: {
     type: Boolean,
@@ -64,7 +70,7 @@ const orderSchema = new mongoose.Schema({
   status: { 
     type: String, 
     default: "Processing",
-    enum: ["Processing", "Paid", "Shipped", "Delivered", "Cancelled", "Refunded"]
+    enum: ["Processing", "Paid", "Payment Failed", "Shipped", "Delivered", "Cancelled", "Refunded"]
   },
   paymentStatus: {
     type: String,
@@ -99,6 +105,14 @@ const orderSchema = new mongoose.Schema({
   }
 }, {
   timestamps: true
+});
+
+// Auto-generate guestCheckoutToken for guest orders
+orderSchema.pre('save', function(next) {
+  if (this.isNew && this.orderType === 'guest' && !this.guestCheckoutToken) {
+    this.guestCheckoutToken = crypto.randomBytes(32).toString('hex');
+  }
+  next();
 });
 
 // Index for better query performance

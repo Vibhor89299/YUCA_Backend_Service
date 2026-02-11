@@ -32,7 +32,7 @@ export const getProductById = async (req, res) => {
 // @access  Private/Admin
 export const createProduct = async (req, res) => {
   try {
-    const { name, description, price, countInStock, image, images, category } = req.body;
+    const { name, description, retailPrice, mrp, sku, countInStock, image, images, category } = req.body;
     const existingProduct = await Product.findOne({ name });
     if (existingProduct) {
       return res.status(400).json({
@@ -40,10 +40,24 @@ export const createProduct = async (req, res) => {
         message: `Product "${name}" already exists`
       });
     }
+
+    // Check for duplicate SKU if provided
+    if (sku) {
+      const existingSku = await Product.findOne({ sku: sku.toUpperCase() });
+      if (existingSku) {
+        return res.status(400).json({
+          success: false,
+          message: `SKU "${sku}" already exists`
+        });
+      }
+    }
+
     const product = new Product({
       name,
       description,
-      price,
+      retailPrice,
+      mrp: mrp || retailPrice,
+      sku: sku || undefined,
       countInStock: countInStock || 0,
       image: image || '/images/sample.jpg',
       images: images || [],
@@ -78,7 +92,9 @@ export const createProductsBulk = async (req, res) => {
     .map(prod => ({
       name: prod.name,
       description: prod.description,
-      price: prod.price,
+      retailPrice: prod.retailPrice,
+      mrp: prod.mrp || prod.retailPrice,
+      sku: prod.sku || undefined,
       countInStock: prod.countInStock || 0,
       image: prod.image || '/images/sample.jpg',
       category: prod.category,
@@ -94,10 +110,10 @@ export const createProductsBulk = async (req, res) => {
     });
   } catch (error) {
     console.error('Error creating products:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
       message: 'Error creating products',
-      error: error.message 
+      error: error.message
     });
   }
 };
@@ -159,7 +175,7 @@ export const updateProduct = async (req, res) => {
       return res.status(400).json({ message: 'Invalid product ID' });
     }
 
-    const { name, description, price, image, images, category, countInStock } = req.body;
+    const { name, description, retailPrice, mrp, sku, image, images, category, countInStock, isNewArrival, newArrivalOrder } = req.body;
 
     const product = await Product.findById(req.params.id);
 
@@ -167,14 +183,29 @@ export const updateProduct = async (req, res) => {
       return res.status(404).json({ message: 'Product not found' });
     }
 
+    // Check for duplicate SKU if provided and changed
+    if (sku && sku.toUpperCase() !== product.sku) {
+      const existingSku = await Product.findOne({ sku: sku.toUpperCase(), _id: { $ne: product._id } });
+      if (existingSku) {
+        return res.status(400).json({
+          success: false,
+          message: `SKU "${sku}" already exists`
+        });
+      }
+    }
+
     // Update product fields
     product.name = name || product.name;
     product.description = description || product.description;
-    product.price = price ?? product.price;
+    product.retailPrice = retailPrice ?? product.retailPrice;
+    product.mrp = mrp ?? product.mrp;
+    product.sku = sku ? sku.toUpperCase() : product.sku;
     product.image = image || product.image;
     product.images = images || product.images;
     product.category = category || product.category;
     product.countInStock = countInStock ?? product.countInStock;
+    if (typeof isNewArrival !== 'undefined') product.isNewArrival = isNewArrival;
+    if (typeof newArrivalOrder !== 'undefined') product.newArrivalOrder = newArrivalOrder;
 
     const updatedProduct = await product.save();
 
@@ -252,6 +283,57 @@ export const deleteProduct = async (req, res) => {
     res.status(500).json({ 
       message: 'Error deleting product',
       error: error.message 
+    });
+  }
+};
+
+// @desc    Bulk update new arrivals selection and ordering
+// @route   PUT /api/admin/new-arrivals
+// @access  Private/Admin
+export const updateNewArrivals = async (req, res) => {
+  try {
+    const { products } = req.body; // [{ productId, newArrivalOrder }]
+
+    if (!Array.isArray(products)) {
+      return res.status(400).json({ message: 'products must be an array' });
+    }
+
+    // Clear all existing new arrival flags
+    await Product.updateMany(
+      { isNewArrival: true },
+      { $set: { isNewArrival: false, newArrivalOrder: 0 } }
+    );
+
+    // Set new arrival flags for the provided products
+    if (products.length > 0) {
+      const bulkOps = products.map((item) => ({
+        updateOne: {
+          filter: { _id: item.productId },
+          update: {
+            $set: {
+              isNewArrival: true,
+              newArrivalOrder: item.newArrivalOrder,
+            },
+          },
+        },
+      }));
+
+      await Product.bulkWrite(bulkOps);
+    }
+
+    // Return updated new arrivals
+    const updatedProducts = await Product.find({ isNewArrival: true })
+      .sort({ newArrivalOrder: 1 });
+
+    res.json({
+      message: 'New arrivals updated successfully',
+      products: updatedProducts,
+    });
+  } catch (error) {
+    console.error('Error updating new arrivals:', error);
+    res.status(500).json({
+      message: 'Error updating new arrivals',
+      error: error.message,
     });
   }
 };

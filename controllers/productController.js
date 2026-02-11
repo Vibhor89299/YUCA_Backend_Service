@@ -126,9 +126,22 @@ export const getFeaturedProducts = async (req, res) => {
 export const getNewArrivals = async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 8;
-    const products = await Product.find()
-      .sort({ createdAt: -1 })
-      .limit(limit);
+
+    // Check if any products are flagged as new arrivals
+    const flaggedCount = await Product.countDocuments({ isNewArrival: true });
+
+    let products;
+    if (flaggedCount > 0) {
+      products = await Product.find({ isNewArrival: true })
+        .sort({ newArrivalOrder: 1 })
+        .limit(limit);
+    } else {
+      // Fallback: return most recently created products
+      products = await Product.find()
+        .sort({ createdAt: -1 })
+        .limit(limit);
+    }
+
     res.json(products);
   } catch (error) {
     res.status(500).json({ message: error.message });

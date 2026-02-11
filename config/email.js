@@ -647,6 +647,263 @@ export const emailTemplates = {
     };
   },
 
+  // Welcome email for newsletter/coming soon subscribers
+  welcomeSubscription: (email, source = 'coming_soon') => {
+    const sourceMessages = {
+      coming_soon: "You've joined our exclusive early access list!",
+      homepage: "You've subscribed to our newsletter!",
+      footer: "You've subscribed to our newsletter!",
+      checkout: "You've opted in for updates!",
+      popup: "You've subscribed to our newsletter!"
+    };
+
+    const sourceMessage = sourceMessages[source] || "You've subscribed to our updates!";
+
+    return {
+      subject: "Welcome to YUCA Lifestyle! 🌿",
+      html: `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Welcome to YUCA Lifestyle</title>
+          <style>
+            body {
+              font-family: 'Georgia', serif;
+              line-height: 1.8;
+              color: #2D2D23;
+              max-width: 600px;
+              margin: 0 auto;
+              padding: 20px;
+              background-color: #F2E0CF;
+            }
+            .container {
+              background-color: #FFFDF9;
+              padding: 40px;
+              border-radius: 12px;
+              box-shadow: 0 4px 20px rgba(45, 45, 35, 0.1);
+            }
+            .header {
+              text-align: center;
+              padding-bottom: 30px;
+              margin-bottom: 30px;
+              border-bottom: 2px solid #B48954;
+            }
+            .logo {
+              font-size: 32px;
+              font-weight: bold;
+              color: #854628;
+              letter-spacing: 3px;
+              margin-bottom: 10px;
+            }
+            .tagline {
+              color: #7C7458;
+              font-style: italic;
+              font-size: 14px;
+            }
+            .welcome-title {
+              font-size: 28px;
+              color: #854628;
+              text-align: center;
+              margin-bottom: 20px;
+            }
+            .welcome-message {
+              background: linear-gradient(135deg, #F2E0CF 0%, #D4C7B4 100%);
+              padding: 25px;
+              border-radius: 10px;
+              margin: 25px 0;
+              text-align: center;
+            }
+            .welcome-message p {
+              margin: 0;
+              font-size: 16px;
+              color: #2D2D23;
+            }
+            .features {
+              margin: 30px 0;
+            }
+            .feature-item {
+              display: flex;
+              align-items: flex-start;
+              margin-bottom: 15px;
+              padding: 15px;
+              background-color: #FAF7F2;
+              border-radius: 8px;
+              border-left: 3px solid #B48954;
+            }
+            .feature-icon {
+              font-size: 24px;
+              margin-right: 15px;
+            }
+            .feature-text {
+              flex: 1;
+            }
+            .feature-text strong {
+              color: #854628;
+              display: block;
+              margin-bottom: 5px;
+            }
+            .feature-text span {
+              color: #7C7458;
+              font-size: 14px;
+            }
+            .cta-section {
+              text-align: center;
+              margin: 35px 0;
+            }
+            .cta-button {
+              display: inline-block;
+              background-color: #854628;
+              color: #F2E0CF !important;
+              padding: 15px 35px;
+              text-decoration: none;
+              border-radius: 8px;
+              font-weight: bold;
+              letter-spacing: 1px;
+              transition: background-color 0.3s;
+            }
+            .cta-button:hover {
+              background-color: #6B3820;
+            }
+            .social-section {
+              text-align: center;
+              margin: 30px 0;
+              padding: 20px;
+              background-color: #FAF7F2;
+              border-radius: 8px;
+            }
+            .social-section h3 {
+              color: #854628;
+              margin-bottom: 15px;
+              font-size: 16px;
+            }
+            .social-links a {
+              display: inline-block;
+              margin: 0 10px;
+              color: #854628;
+              text-decoration: none;
+              font-weight: bold;
+            }
+            .footer {
+              text-align: center;
+              margin-top: 35px;
+              padding-top: 25px;
+              border-top: 1px solid #D4C7B4;
+              color: #7C7458;
+              font-size: 13px;
+            }
+            .unsubscribe {
+              margin-top: 15px;
+              font-size: 12px;
+            }
+            .unsubscribe a {
+              color: #7C7458;
+              text-decoration: underline;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <div class="logo">YUCA</div>
+              <div class="tagline">Handcrafted with Care, Just for You</div>
+            </div>
+
+            <h1 class="welcome-title">Welcome to the YUCA Family!</h1>
+
+            <div class="welcome-message">
+              <p>${sourceMessage}</p>
+              <p style="margin-top: 15px; font-size: 14px; color: #7C7458;">
+                We're thrilled to have you join us on this journey of sustainable, handcrafted living.
+              </p>
+            </div>
+
+            <div class="features">
+              <div class="feature-item">
+                <span class="feature-icon">🌿</span>
+                <div class="feature-text">
+                  <strong>Early Access</strong>
+                  <span>Be the first to know about new collections and exclusive launches</span>
+                </div>
+              </div>
+              <div class="feature-item">
+                <span class="feature-icon">✨</span>
+                <div class="feature-text">
+                  <strong>Special Offers</strong>
+                  <span>Subscriber-only discounts and early bird pricing</span>
+                </div>
+              </div>
+              <div class="feature-item">
+                <span class="feature-icon">🎁</span>
+                <div class="feature-text">
+                  <strong>Behind the Scenes</strong>
+                  <span>Stories of our artisans and the craft behind each piece</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="cta-section">
+              <a href="https://yucalifestyle.com" class="cta-button">EXPLORE YUCA</a>
+            </div>
+
+            <div class="social-section">
+              <h3>Follow Our Journey</h3>
+              <div class="social-links">
+                <a href="https://instagram.com/yucalifestyle">Instagram</a>
+                <a href="https://facebook.com/yucalifestyle">Facebook</a>
+              </div>
+            </div>
+
+            <div class="footer">
+              <p>Thank you for believing in handcrafted, sustainable living.</p>
+              <p style="margin-top: 10px;"><strong>With warmth,</strong><br>The YUCA Team</p>
+
+              <div class="unsubscribe">
+                <p>You received this email because you subscribed at yucalifestyle.com</p>
+                <p><a href="https://yucalifestyle.com/unsubscribe?email=${encodeURIComponent(email)}">Unsubscribe</a></p>
+              </div>
+            </div>
+          </div>
+        </body>
+        </html>
+      `,
+      text: `
+        Welcome to YUCA Lifestyle! 🌿
+
+        ${sourceMessage}
+
+        We're thrilled to have you join us on this journey of sustainable, handcrafted living.
+
+        What you can look forward to:
+
+        🌿 Early Access
+        Be the first to know about new collections and exclusive launches
+
+        ✨ Special Offers
+        Subscriber-only discounts and early bird pricing
+
+        🎁 Behind the Scenes
+        Stories of our artisans and the craft behind each piece
+
+        Visit us: https://yucalifestyle.com
+
+        Follow Our Journey:
+        - Instagram: https://instagram.com/yucalifestyle
+        - Facebook: https://facebook.com/yucalifestyle
+
+        Thank you for believing in handcrafted, sustainable living.
+
+        With warmth,
+        The YUCA Team
+
+        ---
+        You received this email because you subscribed at yucalifestyle.com
+        To unsubscribe, visit: https://yucalifestyle.com/unsubscribe?email=${encodeURIComponent(email)}
+      `
+    };
+  },
+
   orderConfirmation: (orderData) => {
     const { order, customerInfo } = orderData;
     
@@ -934,6 +1191,16 @@ export class EmailService {
     const template = emailTemplates.orderConfirmation(orderData);
     return await this.sendEmail(
       orderData.customerInfo.email,
+      template.subject,
+      template.html,
+      template.text
+    );
+  }
+
+  async sendWelcomeEmail(email, source = 'coming_soon') {
+    const template = emailTemplates.welcomeSubscription(email, source);
+    return await this.sendEmail(
+      email,
       template.subject,
       template.html,
       template.text

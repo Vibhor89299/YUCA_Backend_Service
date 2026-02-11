@@ -12,11 +12,24 @@ const productSchema = new mongoose.Schema(
       type: String,
       required: [true, 'Please enter product description']
     },
-    price: {
+    retailPrice: {
       type: Number,
-      required: [true, 'Please enter product price'],
-      maxLength: [5, 'Product price cannot exceed 5 characters'],
+      required: [true, 'Please enter retail price'],
+      maxLength: [5, 'Retail price cannot exceed 5 characters'],
       default: 0.0
+    },
+    mrp: {
+      type: Number,
+      required: [true, 'Please enter MRP'],
+      maxLength: [5, 'MRP cannot exceed 5 characters'],
+      default: 0.0
+    },
+    sku: {
+      type: String,
+      unique: true,
+      sparse: true,
+      trim: true,
+      uppercase: true
     },
     countInStock: {
       type: Number,
@@ -33,7 +46,11 @@ const productSchema = new mongoose.Schema(
           'home',
           'lifestyle',
           'wellness',
-          'sustainable'
+          'sustainable',
+          'bowls',
+          'candles',
+          'glassware',
+          'cutlery'
         ],
         message: 'Please select correct category for product'
       }
@@ -62,6 +79,15 @@ const productSchema = new mongoose.Schema(
       type: Number,
       default: 0,
       index: true
+    },
+    isNewArrival: {
+      type: Boolean,
+      default: false,
+      index: true
+    },
+    newArrivalOrder: {
+      type: Number,
+      default: 0
     }
   },
   {
@@ -83,7 +109,7 @@ productSchema.virtual('reviews', {
 });
 
 // Cascade delete reviews when a product is deleted
-productSchema.pre('remove', async function(next) {
+productSchema.pre('remove', async function (next) {
   await this.model('Review').deleteMany({ product: this._id });
   next();
 });

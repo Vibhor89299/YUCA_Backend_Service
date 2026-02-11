@@ -17,8 +17,10 @@ import guestRoutes from "./routes/guestRoutes.js";
 import emailRoutes from "./routes/emailRoutes.js";
 import analyticsRoutes from "./routes/analyticsRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
+import subscribeRoutes from "./routes/subscribeRoutes.js";
 import { notFound, errorHandler } from './middleware/errorMiddleware.js';
 import { verifyCloudinaryConfig } from './config/cloudinary.js';
+import { startOrderCleanupJob } from './utils/orderCleanup.js';
 
 // Load environment variables
 dotenv.config();
@@ -43,6 +45,7 @@ const allowedOrigins = [
   'http://127.0.0.1:3000', // Alternative React dev port
   'https://yucalifestyle.com', // Production domain
   'https://www.yucalifestyle.com', // Production domain with www
+  'http://localhost:5174'
 ];
 
 const corsOptions = {
@@ -111,6 +114,7 @@ app.use("/api/guests", guestRoutes);
 app.use("/api/email", emailRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/upload", uploadRoutes);
+app.use("/api/subscribe", subscribeRoutes);
 
 // Handle 404 - Not Found
 app.use(notFound);
@@ -122,6 +126,9 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 5001;
 const server = app.listen(PORT, () => {
   console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+
+  // Start periodic cleanup of expired unpaid orders
+  startOrderCleanupJob();
 });
 
 // Handle unhandled promise rejections

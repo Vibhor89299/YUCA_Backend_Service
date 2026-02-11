@@ -9,12 +9,14 @@ import {
   getProductsAdmin,
   getProductById,
   deleteUser,
-  updateRole
+  updateRole,
+  updateNewArrivals
 } from "../controllers/adminController.js";
-import { 
-  productValidationRules, 
+import {
+  productValidationRules,
+  updateProductValidationRules,
   bulkProductValidationRules,
-  inventoryValidationRules 
+  inventoryValidationRules
 } from "../middleware/validators/productValidator.js";
 import { validate } from "../middleware/validationMiddleware.js";
 import Product from "../models/Product.js"
@@ -73,7 +75,7 @@ router.put(
   "/products/:id",
   protect,
   adminOnly,
-  productValidationRules(),
+  updateProductValidationRules(),
   validate,
   updateProduct
 );
@@ -94,6 +96,11 @@ router.put(
 // @route   DELETE /api/admin/products/:id
 // @access  Private/Admin
 router.delete("/products/:id", protect, adminOnly, deleteProduct);
+
+// @desc    Bulk update new arrivals
+// @route   PUT /api/admin/new-arrivals
+// @access  Private/Admin
+router.put("/new-arrivals", protect, adminOnly, updateNewArrivals);
 
 // @desc    Get low stock products
 // @route   GET /api/admin/low-stock

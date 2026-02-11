@@ -25,7 +25,7 @@ export const addToCart = async (req, res) => {
     }
 
     // Check if item already exists in cart
-    const existingCartItem = user.cart.find(item => 
+    const existingCartItem = user.cart.find(item =>
       item.productId.toString() === productId
     );
 
@@ -46,20 +46,31 @@ export const addToCart = async (req, res) => {
     });
 
     // Transform cart data
-    const cartItems = updatedUser.cart.map(item => ({
+    // Filter out items where product no longer exists (stale data)
+    const validCartItems = updatedUser.cart.filter(item => item.productId);
+
+    // If we found stale items, update the user's cart to remove them
+    if (validCartItems.length < updatedUser.cart.length) {
+      updatedUser.cart = validCartItems;
+      await updatedUser.save();
+    }
+
+    // Transform cart data
+    const cartItems = validCartItems.map(item => ({
       id: item.productId._id,
       quantity: item.quantity,
       product: {
         id: item.productId._id,
         name: item.productId.name,
-        price: item.productId.price,
+        retailPrice: item.productId.retailPrice,
+        mrp: item.productId.mrp,
         image: item.productId.image,
-        inStock: item.productId.inStock,
+        countInStock: item.productId.countInStock,
         brand: item.productId.brand || 'YUCA'
       }
     }));
 
-    const total = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+    const total = cartItems.reduce((sum, item) => sum + (item.product.retailPrice * item.quantity), 0);
 
     res.status(200).json({
       message: 'Product added to cart',
@@ -88,25 +99,37 @@ export const getCart = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
+    // Filter out items where product no longer exists (stale data)
+    const validCartItems = user.cart.filter(item => item.productId);
+
+    // If we found stale items, just return the valid ones.
+    // We avoid saving here to prevent concurrency/VersionErrors on read.
+    // Cleanup will happen on next write operation (add/update/remove).
+    if (validCartItems.length < user.cart.length) {
+      // user.cart = validCartItems;
+      // await user.save();
+    }
+
     // Transform cart data to match frontend structure
-    const cartItems = user.cart.map(item => ({
+    const cartItems = validCartItems.map(item => ({
       id: item.productId._id,
       quantity: item.quantity,
       product: {
         id: item.productId._id,
         name: item.productId.name,
-        price: item.productId.price,
+        retailPrice: item.productId.retailPrice,
+        mrp: item.productId.mrp,
         image: item.productId.image,
-        inStock: item.productId.inStock,
+        countInStock: item.productId.countInStock,
         brand: item.productId.brand || 'YUCA'
       }
     }));
 
     // Calculate total
-    const total = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+    const total = cartItems.reduce((sum, item) => sum + (item.product.retailPrice * item.quantity), 0);
 
-    res.status(200).json({ 
-      items: cartItems, 
+    res.status(200).json({
+      items: cartItems,
       total,
       itemCount: cartItems.reduce((sum, item) => sum + item.quantity, 0)
     });
@@ -132,7 +155,7 @@ export const updateCartItem = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    const cartItem = user.cart.find(item => 
+    const cartItem = user.cart.find(item =>
       item.productId.toString() === productId
     );
 
@@ -150,20 +173,30 @@ export const updateCartItem = async (req, res) => {
     });
 
     // Transform cart data
-    const cartItems = updatedUser.cart.map(item => ({
+    // Filter out items where product no longer exists
+    const validCartItems = updatedUser.cart.filter(item => item.productId);
+
+    if (validCartItems.length < updatedUser.cart.length) {
+      updatedUser.cart = validCartItems;
+      await updatedUser.save();
+    }
+
+    // Transform cart data
+    const cartItems = validCartItems.map(item => ({
       id: item.productId._id,
       quantity: item.quantity,
       product: {
         id: item.productId._id,
         name: item.productId.name,
-        price: item.productId.price,
+        retailPrice: item.productId.retailPrice,
+        mrp: item.productId.mrp,
         image: item.productId.image,
-        inStock: item.productId.inStock,
+        countInStock: item.productId.countInStock,
         brand: item.productId.brand || 'YUCA'
       }
     }));
 
-    const total = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+    const total = cartItems.reduce((sum, item) => sum + (item.product.retailPrice * item.quantity), 0);
 
     res.status(200).json({
       message: 'Cart item updated successfully',
@@ -187,7 +220,7 @@ export const removeFromCart = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    user.cart = user.cart.filter(item => 
+    user.cart = user.cart.filter(item =>
       item.productId.toString() !== productId
     );
 
@@ -200,20 +233,30 @@ export const removeFromCart = async (req, res) => {
     });
 
     // Transform cart data
-    const cartItems = updatedUser.cart.map(item => ({
+    // Filter out items where product no longer exists
+    const validCartItems = updatedUser.cart.filter(item => item.productId);
+
+    if (validCartItems.length < updatedUser.cart.length) {
+      updatedUser.cart = validCartItems;
+      await updatedUser.save();
+    }
+
+    // Transform cart data
+    const cartItems = validCartItems.map(item => ({
       id: item.productId._id,
       quantity: item.quantity,
       product: {
         id: item.productId._id,
         name: item.productId.name,
-        price: item.productId.price,
+        retailPrice: item.productId.retailPrice,
+        mrp: item.productId.mrp,
         image: item.productId.image,
-        inStock: item.productId.inStock,
+        countInStock: item.productId.countInStock,
         brand: item.productId.brand || 'YUCA'
       }
     }));
 
-    const total = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+    const total = cartItems.reduce((sum, item) => sum + (item.product.retailPrice * item.quantity), 0);
 
     res.status(200).json({
       message: 'Item removed from cart',

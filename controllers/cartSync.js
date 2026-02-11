@@ -57,7 +57,7 @@ export const syncGuestCart = async (req, res) => {
       quantity: item.quantity
     }));
 
-    const total = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+    const total = cartItems.reduce((sum, item) => sum + (item.product.retailPrice * item.quantity), 0);
     const itemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
     res.status(200).json({

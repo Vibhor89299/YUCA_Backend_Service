@@ -51,12 +51,12 @@ export const createOrder = async (req, res) => {
         product: product._id,
         name: product.name,
         quantity: item.quantity,
-        price: product.price,
+        price: product.retailPrice,
         image: product.image
       });
 
       // Calculate total price
-      totalPrice += product.price * item.quantity;
+      totalPrice += product.retailPrice * item.quantity;
     }
 
     // Handle guest order creation
@@ -127,7 +127,10 @@ export const createOrder = async (req, res) => {
         status: order.status,
         orderType: order.orderType,
         createdAt: order.createdAt,
-        ...(isGuestOrder && { guestInfo: order.guestInfo })
+        ...(isGuestOrder && {
+          guestInfo: order.guestInfo,
+          guestCheckoutToken: order.guestCheckoutToken
+        })
       }
     });
 
@@ -332,7 +335,7 @@ export const createRetailOrder = async (req, res) => {
     } = req.body;
 
     // Admin authentication check
-    if (!req.user || !req.user.role === 'ADMIN') {
+    if (!req.user || req.user.role !== 'ADMIN') {
       console.debug('User role:', req.user.role);
       await session.abortTransaction();
       return res.status(403).json({ message: 'Admin access required for retail checkout' });
@@ -369,12 +372,12 @@ export const createRetailOrder = async (req, res) => {
         product: product._id,
         name: product.name,
         quantity: item.quantity,
-        price: product.price,
+        price: product.retailPrice,
         image: product.image
       });
 
       // Calculate total price
-      calculatedTotal += product.price * item.quantity;
+      calculatedTotal += product.retailPrice * item.quantity;
     }
 
     // Validate total price if provided
