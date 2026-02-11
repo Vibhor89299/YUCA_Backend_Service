@@ -45,7 +45,8 @@ const allowedOrigins = [
   'http://127.0.0.1:3000', // Alternative React dev port
   'https://yucalifestyle.com', // Production domain
   'https://www.yucalifestyle.com', // Production domain with www
-  'http://localhost:5174'
+  'http://localhost:5174',
+  'https://admin.yucalifestyle.com'
 ];
 
 const corsOptions = {
