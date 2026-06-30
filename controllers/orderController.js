@@ -4,6 +4,7 @@ import Guest from '../models/Guest.js';
 import { validationResult } from 'express-validator';
 import mongoose from 'mongoose';
 import { generateOrderNumber, generateOrderUUID, isValidOrderNumber } from '../utils/orderIdGenerator.js';
+import { posthog } from '../config/posthog.js';
 
 export const createOrder = async (req, res) => {
   const errors = validationResult(req);
@@ -115,7 +116,22 @@ export const createOrder = async (req, res) => {
     });
     
     await session.commitTransaction();
-    
+
+    // PostHog server-side event
+    posthog?.capture({
+      distinctId: userId ? userId.toString() : (guestInfo?.email || 'guest'),
+      event: 'order_placed',
+      properties: {
+        orderId: order._id.toString(),
+        total: order.totalPrice,
+        itemCount: order.items.length,
+        orderType: order.orderType,
+        paymentMethod: order.paymentMethod,
+        city: order.shippingAddress?.city,
+        state: order.shippingAddress?.state,
+      },
+    });
+
     res.status(201).json({
       message: 'Order created successfully',
       order: {
