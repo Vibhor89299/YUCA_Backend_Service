@@ -1,0 +1,31 @@
+name: deploy
+
+# Runs only after the `ci` workflow succeeds on master (cross-workflow gate),
+# so a broken commit never reaches the VM.
+on:
+  workflow_run:
+    workflows: ["ci"]
+    types: [completed]
+    branches: [master]
+
+jobs:
+  deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to Azure VM over SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.AZURE_VM_HOST }}
+          username: ${{ secrets.AZURE_VM_USER }}
+          key: ${{ secrets.AZURE_VM_SSH_KEY }}
+          script: |
+            set -e
+            cd ${{ secrets.DEPLOY_PATH }}
+            git fetch --all
+            git reset --hard origin/master
+            npm ci --omit=dev
+            pm2 reload yuca-api --update-env
+            sleep 3
+            curl -fsS http://127.0.0.1:5001/health
+            echo "Deploy OK"
