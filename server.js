@@ -1,5 +1,5 @@
+import './config/env.js';
 import express from "express";
-import dotenv from "dotenv";
 import helmet from "helmet";
 import cors from "cors";
 import morgan from "morgan";
@@ -15,15 +15,11 @@ import productRoutes from "./routes/productRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
 import guestRoutes from "./routes/guestRoutes.js";
 import emailRoutes from "./routes/emailRoutes.js";
-import analyticsRoutes from "./routes/analyticsRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
 import subscribeRoutes from "./routes/subscribeRoutes.js";
 import { notFound, errorHandler } from './middleware/errorMiddleware.js';
 import { verifyCloudinaryConfig } from './config/cloudinary.js';
 import { startOrderCleanupJob } from './utils/orderCleanup.js';
-
-// Load environment variables
-dotenv.config();
 
 // Connect to MongoDB
 connectDB();
@@ -86,6 +82,12 @@ if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
 
+// Razorpay webhook needs the RAW body to verify the HMAC signature.
+// This MUST be registered before express.json() — otherwise the JSON parser
+// consumes the stream first and the signature is computed over a parsed object,
+// which never matches and silently rejects every webhook. (YL-002)
+app.use('/api/payments/webhook', express.raw({ type: 'application/json', limit: '1mb' }));
+
 // Body parser, reading data from body into req.body
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
@@ -113,7 +115,6 @@ app.use("/api/products", productRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/guests", guestRoutes);
 app.use("/api/email", emailRoutes);
-app.use("/api/analytics", analyticsRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/subscribe", subscribeRoutes);
 

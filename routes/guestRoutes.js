@@ -70,8 +70,8 @@ router.post(
   '/convert-to-user',
   protect,
   [
-    body('guestId', 'Guest ID is required').isLength({ min: 10 }),
-    body('userId', 'User ID is required').isMongoId()
+    // userId is no longer accepted — the link target is req.user._id. (YL-002)
+    body('guestId', 'Guest ID is required').isLength({ min: 10 })
   ],
   convertGuestToUser
 );

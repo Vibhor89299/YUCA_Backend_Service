@@ -119,11 +119,11 @@ router.post(
 
 // @desc    Handle Razorpay webhook
 // @route   POST /api/payments/webhook
-// @access  Public (Razorpay only)
+// @access  Public (Razorpay only — authenticated via HMAC signature)
+// Raw body is applied globally for this path in server.js (before express.json),
+// so the signature can be verified over the raw bytes. (YL-002)
 router.post(
   '/webhook',
-  // Raw body parser for webhook signature verification
-  express.raw({ type: 'application/json' }),
   handleWebhook
 );
 
