@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
+import { posthog } from '../config/posthog.js';
 
 // Generate JWT token with user info
 const generateToken = (user) => {
@@ -29,15 +30,12 @@ const formatUserResponse = (user) => ({
 
 export const register = async (req, res) => {
   try {
-    const { name, email, password, role = 'CUSTOMER' } = req.body;
-    
-    // Validate role
-    if (role && !['ADMIN', 'CUSTOMER'].includes(role)) {
-      return res.status(400).json({ 
-        success: false,
-        message: "Invalid role. Must be either 'ADMIN' or 'CUSTOMER'"
-      });
-    }
+    const { name, email, password } = req.body;
+
+    // Role is NEVER accepted from the client on public registration — otherwise
+    // anyone could mint an ADMIN account. Admins are provisioned out-of-band
+    // (see scripts/seedProducts.js). (YL-002)
+    const role = 'CUSTOMER';
 
     // Check if user exists
     const userExists = await User.findOne({ email });
@@ -58,6 +56,13 @@ export const register = async (req, res) => {
 
     // Generate token
     const token = generateToken(user);
+
+    // PostHog server-side registration event
+    posthog?.capture({
+      distinctId: user._id.toString(),
+      event: 'user_registered_server',
+      properties: { email: user.email, source: 'web' },
+    });
 
     // Return response
     res.status(200).json({

@@ -1,7 +1,7 @@
 import express from "express";
 import { register, login, getProfile, updateProfile, getAdminAllUser } from "../controllers/authController.js";
 import { registerValidation, loginValidation, profileUpdateValidation } from "../middlewares/validationMiddleware.js";
-import { protect } from "../middlewares/authMiddleware.js";
+import { protect, adminOnly } from "../middlewares/authMiddleware.js";
 import { validationResult } from "express-validator";
 
 const router = express.Router();
@@ -18,6 +18,6 @@ router.post("/register", registerValidation, validate, register);
 router.post("/login", loginValidation, validate, login);
 router.get("/profile", protect, getProfile);
 router.put("/profile", protect, profileUpdateValidation, validate, updateProfile);
-router.get("/getAllUser",protect,getAdminAllUser)
+router.get("/getAllUser", protect, adminOnly, getAdminAllUser)
 
 export default router;

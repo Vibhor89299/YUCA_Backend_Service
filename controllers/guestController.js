@@ -177,15 +177,26 @@ export const convertGuestToUser = async (req, res) => {
   }
 
   try {
-    const { guestId, userId } = req.body;
+    const { guestId } = req.body;
 
-    const guest = await Guest.findOne({ 
+    // The link target is ALWAYS the authenticated caller — never a client-supplied
+    // userId (which previously allowed reassigning a guest's orders to anyone). (YL-002)
+    const userId = req.user._id;
+
+    const guest = await Guest.findOne({
       guestId: guestId,
-      isActive: true 
+      isActive: true
     });
 
     if (!guest) {
       return res.status(404).json({ message: 'Guest not found' });
+    }
+
+    // Ownership proof: the caller may only claim a guest session whose email
+    // matches their own account email — i.e. the same person who checked out as
+    // a guest is now merging it into their account. (YL-002)
+    if (!req.user.email || guest.email.toLowerCase() !== req.user.email.toLowerCase()) {
+      return res.status(403).json({ message: 'You are not authorized to convert this guest session' });
     }
 
     if (!guest.canConvertToUser()) {
@@ -198,7 +209,7 @@ export const convertGuestToUser = async (req, res) => {
     // Update all guest orders to link to user
     await Order.updateMany(
       { guest: guest._id },
-      { 
+      {
         user: userId,
         guest: null,
         orderType: 'registered'
@@ -209,7 +220,7 @@ export const convertGuestToUser = async (req, res) => {
     const Payment = mongoose.model('Payment');
     await Payment.updateMany(
       { guest: guest._id },
-      { 
+      {
         user: userId,
         guest: null,
         paymentType: 'registered'

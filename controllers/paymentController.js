@@ -12,6 +12,7 @@ import EmailService from '../config/email.js';
 import { validationResult } from 'express-validator';
 import mongoose from 'mongoose';
 import crypto from 'crypto';
+import { posthog } from '../config/posthog.js';
 
 // Helper function to reduce inventory for paid orders
 // Uses atomic conditional update to prevent race conditions and overselling
@@ -388,6 +389,19 @@ export const verifyPayment = async (req, res) => {
     }
 
     await session.commitTransaction();
+
+    // PostHog server-side payment verification event
+    if (order) {
+      posthog?.capture({
+        distinctId: userId ? userId.toString() : (guestInfo?.email || 'guest'),
+        event: 'payment_verified_server',
+        properties: {
+          orderId: order._id.toString(),
+          razorpayOrderId,
+          amount: order.totalPrice,
+        },
+      });
+    }
 
     // Send invoice email after successful payment (outside transaction)
     if (order) {
