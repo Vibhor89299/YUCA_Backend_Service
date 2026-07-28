@@ -149,3 +149,13 @@ process.on('uncaughtException', (err) => {
   console.error(err.name, err.message);
   process.exit(1);
 });
+
+// Graceful shutdown on SIGTERM (e.g. `pm2 reload`) — drain in-flight requests
+// before exiting so a zero-downtime deploy doesn't cut active connections. (YL-003)
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received — closing server gracefully...');
+  server.close(() => {
+    console.log('Server closed. Exiting.');
+    process.exit(0);
+  });
+});
